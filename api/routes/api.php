@@ -140,7 +140,19 @@ $router->group([
         $router->patch('/products/{id}/images/{imageId}',  [ProductController::class, 'setMainImage']);
         $router->delete('/products/{id}/images/{imageId}', [ProductController::class, 'deleteImage']);
         $router->post('/products/{id}/variants/generate',  [VariantController::class, 'generate']);
+        $router->post('/products/{id}/variants/preview',   [VariantController::class, 'previewGenerate']);
         $router->put('/products/{id}/variants/bulk',       [VariantController::class, 'bulkUpdate']);
+        $router->post('/products/{id}/variants/bulk-inventory', [VariantController::class, 'bulkInventory']);
+        // Axes & values
+        $router->get('/products/{id}/axes',                 [VariantController::class, 'listAxes']);
+        $router->post('/products/{id}/axes',                [VariantController::class, 'createAxis']);
+        $router->post('/products/{id}/axes/with-assignment', [VariantController::class, 'addAxisWithAssignment']);
+        $router->put('/products/{id}/axes/{axisId}',       [VariantController::class, 'updateAxis']);
+        $router->delete('/products/{id}/axes/{axisId}',    [VariantController::class, 'deactivateAxis']);
+        $router->post('/products/{id}/axes/{axisId}/values', [VariantController::class, 'createAxisValue']);
+        $router->put('/products/{id}/axes/{axisId}/values/{valueId}', [VariantController::class, 'updateAxisValue']);
+        $router->delete('/products/{id}/axes/{axisId}/values/{valueId}', [VariantController::class, 'deactivateAxisValue']);
+        $router->post('/products/{id}/axes/{axisId}/merge', [VariantController::class, 'mergeAxisValues']);
 
         // Variants
         $router->put('/variants/{id}',                     [VariantController::class, 'update']);

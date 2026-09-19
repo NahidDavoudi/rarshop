@@ -269,7 +269,11 @@ class ProductService
         );
         $product['options']     = $this->productModel->getOptions($id);
         $product['attributes']  = $this->productModel->getDescriptiveAttributes($id);
+        // New axes first — source of truth is product_variant_axes
+        $axes = $this->variantService->getProductAxes($id, true);
+        // Variants: only active for storefront, but admin gets all via separate call
         $product['variants']    = $this->variantService->getProductVariants($id);
+        $product['active_variants'] = $this->variantService->getActiveVariants($id);
         if (!empty($product['size_guide_set_id'])) {
             $product['size_guide'] = (new \App\Modules\Size\SizeModel())->find($product['size_guide_set_id']);
         }
@@ -280,16 +284,46 @@ class ProductService
             $product['stock']  = (int) ($default['inventory']['quantity'] ?? 0);
         }
 
-        $product['variant_count'] = count($product['variants']);
-        $product['variant_axes']  = $this->buildVariantAxes($product['variants']);
+        $product['variant_count'] = count(array_filter($product['variants'], fn($v) => (int)($v['is_active'] ?? 1) === 1));
+        $product['variant_axes']  = $this->buildVariantAxesFromNewTables($id, $axes);
 
-        if (($product['product_type'] ?? 'simple') === 'variable' && count($product['variants']) > 1) {
-            $prices = array_map(fn($v) => $this->variantService->getEffectivePrice($v, $product), $product['variants']);
+        // product_type derived from axes count
+        $derivedType = !empty($axes) ? 'variable' : 'simple';
+        $product['product_type'] = $derivedType;
+
+        $activeForPricing = array_filter($product['variants'], fn($v) => (int)($v['is_active'] ?? 1) === 1);
+        if ($derivedType === 'variable' && count($activeForPricing) > 1) {
+            $prices = array_map(fn($v) => $this->variantService->getEffectivePrice($v, $product), $activeForPricing);
             $product['price_min'] = min($prices);
             $product['price_max'] = max($prices);
         }
 
         return $product;
+    }
+
+    private function buildVariantAxesFromNewTables(int $productId, array $axes): array
+    {
+        $out = [];
+        foreach ($axes as $axis) {
+            $out[] = [
+                'id'         => (int) $axis['id'],
+                'type_id'    => (int) $axis['id'],
+                'type_name'  => $axis['name'],
+                'type_slug'  => $axis['slug'],
+                'input_type' => $axis['input_type'],
+                'sort_order' => (int)($axis['sort_order'] ?? 0),
+                'is_active'  => (int)($axis['is_active'] ?? 1),
+                'values'     => array_map(fn($v) => [
+                    'id'         => (int) $v['id'],
+                    'value'      => $v['value'],
+                    'slug'       => $v['slug'],
+                    'swatch_hex' => $v['swatch_hex'] ?? null,
+                    'sort_order' => (int)($v['sort_order'] ?? 0),
+                    'is_active'  => (int)($v['is_active'] ?? 1),
+                ], $axis['values'] ?? []),
+            ];
+        }
+        return $out;
     }
 
     private function buildVariantAxes(array $variants): array

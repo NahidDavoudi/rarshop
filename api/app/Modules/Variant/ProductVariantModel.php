@@ -11,6 +11,7 @@ class ProductVariantModel extends Model
         'product_id',
         'sku',
         'title',
+        'combo_key',
         'price',
         'sale_price',
         'cost_price',
@@ -85,6 +86,26 @@ class ProductVariantModel extends Model
 
     public function getAttributeValues(int $variantId): array
     {
+        // New tables first (product_variant_links)
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT pav.id, pav.value, pav.slug, pav.swatch_hex, pav.sort_order,
+                       pav.axis_id AS attribute_type_id, pav.axis_id,
+                       pva.name AS type_name, pva.slug AS type_slug, pva.input_type,
+                       pva.sort_order AS type_sort
+                FROM product_variant_links pvl
+                JOIN product_axis_values pav ON pav.id = pvl.axis_value_id
+                JOIN product_variant_axes pva ON pva.id = pvl.axis_id
+                WHERE pvl.variant_id = ? AND pva.is_active = 1 AND pav.is_active = 1
+                ORDER BY pva.sort_order ASC, pav.sort_order ASC
+            ");
+            $stmt->execute([$variantId]);
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) return $rows;
+        } catch (\Throwable $e) {
+            // tables not yet migrated — fallback
+        }
+        // Fallback to legacy variant_attribute_values
         $stmt = $this->pdo->prepare("
             SELECT av.*, at.name AS type_name, at.slug AS type_slug, at.input_type
             FROM variant_attribute_values vav

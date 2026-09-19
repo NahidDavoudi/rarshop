@@ -36,11 +36,11 @@ class CartModel extends Model
                    pv.sku, pv.title AS variant_title,
                    pv.price AS variant_price, pv.sale_price AS variant_sale_price,
                    COALESCE(ii.quantity, 0) AS variant_stock,
-                   (SELECT GROUP_CONCAT(av.value ORDER BY at.sort_order, av.sort_order SEPARATOR ' · ')
-                    FROM variant_attribute_values vav
-                    JOIN attribute_values av ON av.id = vav.attribute_value_id
-                    JOIN attribute_types at ON at.id = av.attribute_type_id
-                    WHERE vav.variant_id = ci.variant_id) AS variant_label,
+                    (SELECT GROUP_CONCAT(pav.value ORDER BY pva.sort_order, pav.sort_order SEPARATOR ' · ')
+                     FROM product_variant_links pvl
+                     JOIN product_axis_values pav ON pav.id = pvl.axis_value_id
+                     JOIN product_variant_axes pva ON pva.id = pvl.axis_id
+                     WHERE pvl.variant_id = ci.variant_id AND pva.is_active=1 AND pav.is_active=1) AS variant_label,
                    (SELECT pi.image_url FROM product_images pi
                     WHERE pi.product_id = ci.product_id AND pi.is_main = 1
                     LIMIT 1) AS image

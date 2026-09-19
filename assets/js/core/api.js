@@ -388,8 +388,19 @@ const products = {
   listAttributeTypes: () => get('/admin/attribute-types'),
   addAttributeValue: (typeId, data) => post(`/admin/attribute-types/${typeId}/values`, data),
   generateVariants: (id, axes) => post(`/admin/products/${id}/variants/generate`, { axes }),
+  previewGenerate: (id, axes) => post(`/admin/products/${id}/variants/preview`, { axes }),
   bulkUpdateVariants: (id, variants) => put(`/admin/products/${id}/variants/bulk`, { variants }),
+  bulkInventory: (id, payload) => post(`/admin/products/${id}/variants/bulk-inventory`, payload),
   updateVariant: (id, data) => put(`/admin/variants/${id}`, data),
+  listAxes: (id) => get(`/admin/products/${id}/axes`),
+  createAxis: (id, data) => post(`/admin/products/${id}/axes`, data),
+  createAxisWithAssignment: (id, data) => post(`/admin/products/${id}/axes/with-assignment`, data),
+  updateAxis: (id, axisId, data) => put(`/admin/products/${id}/axes/${axisId}`, data),
+  deleteAxis: (id, axisId) => del(`/admin/products/${id}/axes/${axisId}`),
+  createAxisValue: (id, axisId, data) => post(`/admin/products/${id}/axes/${axisId}/values`, data),
+  updateAxisValue: (id, axisId, valueId, data) => put(`/admin/products/${id}/axes/${axisId}/values/${valueId}`, data),
+  deleteAxisValue: (id, axisId, valueId) => del(`/admin/products/${id}/axes/${axisId}/values/${valueId}`),
+  mergeAxisValues: (id, axisId, keepId, loseId) => post(`/admin/products/${id}/axes/${axisId}/merge`, { keep_value_id: keepId, lose_value_id: loseId }),
 };
 
 const categories = {

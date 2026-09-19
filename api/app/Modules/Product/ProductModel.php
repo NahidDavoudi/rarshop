@@ -449,4 +449,12 @@ class ProductModel extends Model
     {
         return $this->exists('slug', $slug, $excludeId);
     }
+
+    public function lockForUpdate(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE id = ? FOR UPDATE");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
 }
