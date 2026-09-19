@@ -6,6 +6,7 @@ use App\Core\Database\Database;
 use App\Modules\Attribute\AttributeValueModel;
 use App\Modules\Product\ProductModel;
 use App\Utils\SlugHelper;
+use PDO;
 
 class VariantService
 {
