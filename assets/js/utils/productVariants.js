@@ -4,17 +4,26 @@
 
 export const STANDARD_SIZES = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 
+export function activeValues(axis) {
+  return (axis.values || []).filter((v) => Number(v.is_active ?? 1) === 1);
+}
+
 export function getVisibleAxes(variantAxes = []) {
-  return variantAxes.filter((axis) => (axis.values?.length ?? 0) > 1);
+  return (variantAxes || [])
+    .filter((axis) => Number(axis.is_active ?? 1) === 1)
+    .filter((axis) => activeValues(axis).length > 1);
 }
 
 export function applyHiddenAxisDefaults(variantAxes = [], selected = {}) {
   const next = { ...selected };
-  variantAxes.forEach((axis) => {
-    if ((axis.values?.length ?? 0) === 1 && axis.values[0]?.id != null) {
-      next[axis.type_slug] = Number(axis.values[0].id);
-    }
-  });
+  (variantAxes || [])
+    .filter((axis) => Number(axis.is_active ?? 1) === 1)
+    .forEach((axis) => {
+      const vals = activeValues(axis);
+      if (vals.length === 1 && vals[0]?.id != null && selected[axis.type_slug] == null) {
+        next[axis.type_slug] = Number(vals[0].id);
+      }
+    });
   return next;
 }
 

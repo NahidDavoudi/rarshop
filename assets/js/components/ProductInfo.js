@@ -19,11 +19,11 @@ function buildValueMap(variant) {
 }
 
 function findMatchingVariant(variants, variantAxes, selected) {
-  const axisSlugs = variantAxes.map((a) => a.type_slug);
+  const active = (variants || []).filter((v) => Number(v.is_active ?? 1) === 1);
+  const axisSlugs = (variantAxes || []).filter((a) => Number(a.is_active ?? 1) === 1).map((a) => a.type_slug);
   if (!axisSlugs.length) {
-    return variants.find((v) => v.is_default)
-      || variants.find((v) => v.is_active)
-      || variants[0]
+    return active.find((v) => v.is_default)
+      || active[0]
       || null;
   }
 
@@ -37,10 +37,10 @@ function findMatchingVariant(variants, variantAxes, selected) {
 }
 
 function isValueSelectable(variants, variantAxes, selected, axisSlug, valueId) {
-  const axisSlugs = variantAxes.map((a) => a.type_slug);
+  const axisSlugs = (variantAxes || []).filter((a) => Number(a.is_active ?? 1) === 1).map((a) => a.type_slug);
 
-  return variants.some((v) => {
-    if (!v.is_active || (v.inventory?.quantity ?? 0) <= 0) return false;
+  return (variants || []).some((v) => {
+    if (Number(v.is_active ?? 1) !== 1 || (v.inventory?.quantity ?? 0) <= 0) return false;
     const valueMap = buildValueMap(v);
     if (valueMap[axisSlug] !== Number(valueId)) return false;
     return axisSlugs.every((slug) => {
@@ -53,9 +53,9 @@ function isValueSelectable(variants, variantAxes, selected, axisSlug, valueId) {
 
 function findInitialSelection(variants, variantAxes) {
   const selected = {};
-  const axisSlugs = variantAxes.map((a) => a.type_slug);
-  const firstInStock = variants.find(
-    (v) => v.is_active && (v.inventory?.quantity ?? 0) > 0,
+  const axisSlugs = (variantAxes || []).filter((a) => Number(a.is_active ?? 1) === 1).map((a) => a.type_slug);
+  const firstInStock = (variants || []).find(
+    (v) => Number(v.is_active ?? 1) === 1 && (v.inventory?.quantity ?? 0) > 0,
   );
 
   if (firstInStock) {
@@ -81,7 +81,7 @@ function renderAxis(axis, variants, variantAxes, selectedValues) {
   const selected = selectedValues[axis.type_slug] || null;
   const isSwatch = isColorAxis(axis);
 
-  return axis.values.map((val) => {
+  return (axis.values || []).filter((val) => Number(val.is_active ?? 1) === 1).map((val) => {
     const selectable = isValueSelectable(variants, variantAxes, selectedValues, axis.type_slug, val.id);
     const active = Number(selected) === Number(val.id);
     const style = getSwatchStyle(val.swatch_hex);
@@ -117,7 +117,7 @@ function renderAxis(axis, variants, variantAxes, selectedValues) {
 function renderColorSelectedLabel(axis, selectedValues) {
   const selectedId = selectedValues[axis.type_slug];
   if (!selectedId) return '';
-  const match = axis.values.find((v) => Number(v.id) === Number(selectedId));
+  const match = (axis.values || []).find((v) => Number(v.id) === Number(selectedId));
   if (!match) return '';
   const t = storeConfig.texts.product;
   return `<span class="text-xs text-muted font-normal mr-1">(${escapeHtml(match.value)})</span>`;

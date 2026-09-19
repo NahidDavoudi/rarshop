@@ -21,7 +21,8 @@ export function normalizeCartItem(item) {
     price,
     image: item.image || item.main_image || '',
     stock: item.stock != null ? Number(item.stock) : null,
-    is_active: item.is_active !== 0 && item.is_active !== false,
+    is_active: item.is_active !== 0 && item.is_active !== false && item.variant_is_active !== 0 && item.variant_is_active !== false,
+    variant_is_active: item.variant_is_active !== 0 && item.variant_is_active !== false,
     subtotal: price * qty,
     variant_title: item.variant_title || '',
     variant_label: item.variant_label || '',
@@ -46,11 +47,27 @@ async function enrichGuestItems(rawItems, fetchProduct) {
         }
 
         let variant = null;
+        const activeVariants = (product.variants || []).filter((v) => Number(v.is_active ?? 1) === 1);
         if (entry.variant_id && product.variants?.length) {
           variant = product.variants.find((v) => Number(v.id) === Number(entry.variant_id));
+          if (variant && Number(variant.is_active ?? 1) !== 1) {
+            return normalizeCartItem({
+              product_id: entry.product_id,
+              variant_id: variant.id,
+              qty: entry.qty,
+              name: product.name,
+              product_name: product.name,
+              price: 0,
+              stock: 0,
+              is_active: false,
+              variant_is_active: false,
+              variant_title: variant.title || '',
+              variant_label: formatVariantLabel(variant),
+            });
+          }
         }
-        if (!variant && product.variants?.length) {
-          variant = product.variants.find((v) => v.is_default) || product.variants[0];
+        if (!variant && activeVariants.length) {
+          variant = activeVariants.find((v) => v.is_default) || activeVariants[0];
         }
 
         const stock = variant

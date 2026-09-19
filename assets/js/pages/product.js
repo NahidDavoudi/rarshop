@@ -124,8 +124,10 @@ Router.onEnter('products', async function (params) {
     if (bcEl) bcEl.innerHTML = Breadcrumb.render(bcItems);
 
     const images = p.images.length ? p.images : [];
-    const defaultVariant = p.variants?.find((v) => v.is_active && (v.inventory?.quantity ?? 0) > 0)
-      || p.variants?.find((v) => v.is_default)
+    const activeVariants = (p.variants || []).filter((v) => Number(v.is_active ?? 1) === 1);
+    const defaultVariant = activeVariants.find((v) => (v.inventory?.quantity ?? 0) > 0)
+      || activeVariants.find((v) => v.is_default)
+      || activeVariants[0]
       || p.variants?.[0];
     const displayPrice = defaultVariant
       ? getVariantPrice(defaultVariant, p)
