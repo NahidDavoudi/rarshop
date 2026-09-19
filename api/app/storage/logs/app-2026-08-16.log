@@ -1,0 +1,13 @@
+[2026-08-16 20:00:29] app.DEBUG: deleteAddress_called {"address_id":15,"user_id":1}
+[2026-08-16 20:10:07] app.INFO: BitPay callback received {"trans_id":"37663153","id_get":"37656991"}
+[2026-08-16 20:10:07] app.INFO: Verifying payment {"trans_id":"37663153","id_get":"37656991"}
+[2026-08-16 20:10:07] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"610433******0656\",\"factorId\":\"54\"}","curl_error":""}
+[2026-08-16 22:19:56] app.INFO: BitPay callback received {"trans_id":"37666037","id_get":"37659875"}
+[2026-08-16 22:19:56] app.INFO: Verifying payment {"trans_id":"37666037","id_get":"37659875"}
+[2026-08-16 22:19:57] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"505416******2328\",\"factorId\":\"55\"}","curl_error":""}
+[2026-08-16 22:33:37] app.INFO: BitPay callback received {"trans_id":"37666343","id_get":"37660181"}
+[2026-08-16 22:33:37] app.INFO: Verifying payment {"trans_id":"37666343","id_get":"37660181"}
+[2026-08-16 22:33:37] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"621986******9012\",\"factorId\":\"57\"}","curl_error":""}
+[2026-08-16 22:43:14] app.INFO: BitPay callback received {"trans_id":"37666579","id_get":"37660417"}
+[2026-08-16 22:43:14] app.INFO: Verifying payment {"trans_id":"37666579","id_get":"37660417"}
+[2026-08-16 22:43:14] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"603799******4193\",\"factorId\":\"59\"}","curl_error":""}

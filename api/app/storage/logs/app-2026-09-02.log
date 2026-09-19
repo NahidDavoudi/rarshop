@@ -1,0 +1,20 @@
+[2026-09-02 20:44:31] app.INFO: BitPay callback received {"trans_id":"38021821","id_get":"38015659"}
+[2026-09-02 20:44:31] app.INFO: Verifying payment {"trans_id":"38021821","id_get":"38015659"}
+[2026-09-02 20:44:31] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":6000000,\"cardNum\":\"621986******6546\",\"factorId\":\"71\"}","curl_error":""}
+[2026-09-02 21:17:44] app.INFO: BitPay callback received {"trans_id":"38022433","id_get":"38016271"}
+[2026-09-02 21:17:44] app.INFO: Verifying payment {"trans_id":"38022433","id_get":"38016271"}
+[2026-09-02 21:17:44] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"621986******7222\",\"factorId\":\"72\"}","curl_error":""}
+[2026-09-02 21:44:51] app.INFO: BitPay callback received {"trans_id":"38022903","id_get":"38016741"}
+[2026-09-02 21:44:51] app.INFO: Verifying payment {"trans_id":"38022903","id_get":"38016741"}
+[2026-09-02 21:44:51] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":11700000,\"cardNum\":\"621986******9422\",\"factorId\":\"73\"}","curl_error":""}
+[2026-09-02 21:58:49] app.INFO: BitPay callback received {"trans_id":"38023203","id_get":"38017041"}
+[2026-09-02 21:58:49] app.INFO: Verifying payment {"trans_id":"38023203","id_get":"38017041"}
+[2026-09-02 21:58:49] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":22400000,\"cardNum\":\"610433******4303\",\"factorId\":\"74\"}","curl_error":""}
+[2026-09-02 22:48:38] app.INFO: BitPay callback received {"trans_id":null,"id_get":null}
+[2026-09-02 22:48:38] app.INFO: Verifying payment {"trans_id":null,"id_get":null}
+[2026-09-02 22:48:38] app.ERROR: Missing id_get in callback {"callback_data":{"trans_id":null,"id_get":null}}
+[2026-09-02 22:49:05] app.INFO: BitPay callback received {"trans_id":"38023203","id_get":"38017041"}
+[2026-09-02 22:49:05] app.INFO: Verifying payment {"trans_id":"38023203","id_get":"38017041"}
+[2026-09-02 22:49:06] app.INFO: BitPay verify response {"response":"{\"status\":11,\"amount\":22400000,\"cardNum\":\"610433******4303\",\"factorId\":\"74\"}","curl_error":""}
+[2026-09-02 22:49:06] app.ERROR: BitPay verify failed {"status":11,"response":{"status":11,"amount":22400000,"cardNum":"610433******4303","factorId":"74"}}
+[2026-09-02 22:49:06] app.ERROR: Payment verification failed {"order_id":74,"result":{"success":false,"ref_id":"38017041","tracking_code":"38023203","error":"verify_failed"}}

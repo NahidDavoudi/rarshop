@@ -1,0 +1,17 @@
+[2026-08-02 10:49:48] app.INFO: BitPay callback received {"trans_id":"37378435","id_get":"37372273"}
+[2026-08-02 10:49:48] app.INFO: Verifying payment {"trans_id":"37378435","id_get":"37372273"}
+[2026-08-02 10:49:48] app.INFO: BitPay verify response {"response":"{\"status\":-4}","curl_error":""}
+[2026-08-02 10:49:48] app.ERROR: BitPay verify failed {"status":-4,"response":{"status":-4}}
+[2026-08-02 10:49:48] app.ERROR: Payment verification failed {"order_id":36,"result":{"success":false,"ref_id":"37372273","tracking_code":"37378435","error":"transaction_not_found_or_failed"}}
+[2026-08-02 19:13:18] app.INFO: BitPay callback received {"trans_id":"37387361","id_get":"37381199"}
+[2026-08-02 19:13:18] app.INFO: Verifying payment {"trans_id":"37387361","id_get":"37381199"}
+[2026-08-02 19:13:20] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"621986******0634\",\"factorId\":\"38\"}","curl_error":""}
+[2026-08-02 19:27:23] app.INFO: BitPay callback received {"trans_id":"37387563","id_get":"37381401"}
+[2026-08-02 19:27:23] app.INFO: Verifying payment {"trans_id":"37387563","id_get":"37381401"}
+[2026-08-02 19:27:24] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"606373******7276\",\"factorId\":\"40\"}","curl_error":""}
+[2026-08-02 22:32:45] app.INFO: BitPay callback received {"trans_id":"37390807","id_get":"37384645"}
+[2026-08-02 22:32:45] app.INFO: Verifying payment {"trans_id":"37390807","id_get":"37384645"}
+[2026-08-02 22:32:46] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"606373******9020\",\"factorId\":\"41\"}","curl_error":""}
+[2026-08-02 23:14:13] app.INFO: BitPay callback received {"trans_id":"37391583","id_get":"37385421"}
+[2026-08-02 23:14:13] app.INFO: Verifying payment {"trans_id":"37391583","id_get":"37385421"}
+[2026-08-02 23:14:13] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"621986******3038\",\"factorId\":\"42\"}","curl_error":""}

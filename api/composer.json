@@ -1,0 +1,19 @@
+{
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "require": {
+        "guzzlehttp/guzzle": "^7.7",
+        "monolog/monolog": "^2.9",
+        "respect/validation": "^2.2",
+        "vlucas/phpdotenv": "^5.5",
+        "firebase/php-jwt": "^6.0",
+        "predis/predis": "^2.2",
+        "intervention/image": "^2.7",
+        "ext-imagick": "*"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

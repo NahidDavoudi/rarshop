@@ -1,0 +1,9 @@
+[2026-09-08 07:42:28] app.DEBUG: deleteAddress_called {"address_id":39,"user_id":55}
+[2026-09-08 16:14:03] app.INFO: BitPay callback received {"trans_id":"38142399","id_get":"38136237"}
+[2026-09-08 16:14:03] app.INFO: Verifying payment {"trans_id":"38142399","id_get":"38136237"}
+[2026-09-08 16:14:03] app.INFO: BitPay verify response {"response":"{\"status\":-4}","curl_error":""}
+[2026-09-08 16:14:03] app.ERROR: BitPay verify failed {"status":-4,"response":{"status":-4}}
+[2026-09-08 16:14:03] app.ERROR: Payment verification failed {"order_id":91,"result":{"success":false,"ref_id":"38136237","tracking_code":"38142399","error":"transaction_not_found_or_failed"}}
+[2026-09-08 20:06:55] app.INFO: BitPay callback received {"trans_id":"38146611","id_get":"38140449"}
+[2026-09-08 20:06:55] app.INFO: Verifying payment {"trans_id":"38146611","id_get":"38140449"}
+[2026-09-08 20:06:56] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":14600000,\"cardNum\":\"603769******6868\",\"factorId\":\"93\"}","curl_error":""}

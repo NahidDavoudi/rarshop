@@ -1,0 +1,6 @@
+api/.env
+api/.htaccess
+api/v1/.htaccess
+api/database/
+.opencode/
+

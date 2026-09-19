@@ -1,0 +1,6 @@
+[2026-07-30 01:39:14] app.ERROR: BitPay rejected request {"response":"-4","order_id":"13"}
+[2026-07-30 15:40:46] app.ERROR: BitPay rejected request {"response":"-2","order_id":"20"}
+[2026-07-30 17:11:37] app.ERROR: Class "App\Modules\Payment\Logger" not found {"request_id":"e9a26d85821db0e5aac02cb21a952689","ip":"204.18.13.146","method":"GET","endpoint":"/api/v1/payment/callback?trans_id=37327471&id_get=37321309&factorId=27","user_id":null,"exception":"Error","file":"/home/rarshopi/public_html/api/app/Modules/Payment/PaymentService.php","line":44}
+[2026-07-30 17:12:42] app.INFO: BitPay callback received {"trans_id":"37327471","id_get":"37321309"}
+[2026-07-30 17:12:42] app.INFO: Verifying payment {"trans_id":"37327471","id_get":"37321309"}
+[2026-07-30 17:12:42] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":100000,\"cardNum\":\"621986******8084\",\"factorId\":\"27\"}","curl_error":""}
