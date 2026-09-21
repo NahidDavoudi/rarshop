@@ -76,6 +76,145 @@ export function installAdminHelpers() {
   window.showModal = (id) => window.$(id)?.classList.remove('hidden');
   window.hideModal = (id) => window.$(id)?.classList.add('hidden');
 
+  // Generic Prompt Modal
+  let _promptResolve = null;
+  window.showPromptModal = (options) => {
+    const modal = window.$('promptModal');
+    if (!modal) return Promise.reject(new Error('Prompt modal not found'));
+    const {
+      title = 'عنوان',
+      message = '',
+      type = 'text',
+      label = '',
+      placeholder = '',
+      value = '',
+      colorValue = '#000000',
+    } = options || {};
+
+    modal.querySelector('#promptModalTitle').textContent = title;
+    modal.querySelector('#promptModalMessage').textContent = message;
+
+    const inputWrap = modal.querySelector('#promptModalInputWrap');
+    const textareaWrap = modal.querySelector('#promptModalTextareaWrap');
+    const colorWrap = modal.querySelector('#promptModalColorWrap');
+    const input = modal.querySelector('#promptModalInput');
+    const textarea = modal.querySelector('#promptModalTextarea');
+    const colorInput = modal.querySelector('#promptModalColorInput');
+
+    inputWrap.classList.add('hidden');
+    textareaWrap.classList.add('hidden');
+    colorWrap.classList.add('hidden');
+
+    if (type === 'textarea') {
+      textareaWrap.classList.remove('hidden');
+      modal.querySelector('#promptModalTextareaLabel').textContent = label;
+      textarea.value = value;
+      textarea.placeholder = placeholder;
+    } else if (type === 'color') {
+      colorWrap.classList.remove('hidden');
+      colorInput.value = colorValue;
+    } else {
+      inputWrap.classList.remove('hidden');
+      modal.querySelector('#promptModalLabel').textContent = label;
+      input.value = value;
+      input.placeholder = placeholder;
+    }
+
+    modal.classList.remove('hidden');
+    modal.querySelector('input, textarea')?.focus?.();
+
+    return new Promise((resolve) => {
+      _promptResolve = resolve;
+    });
+  };
+
+  window.hidePromptModal = () => {
+    const modal = window.$('promptModal');
+    if (modal) modal.classList.add('hidden');
+    if (_promptResolve) {
+      _promptResolve(null);
+      _promptResolve = null;
+    }
+  };
+
+  window.resolvePrompt = (confirmed) => {
+    if (!_promptResolve) return;
+    const modal = window.$('promptModal');
+    let value = null;
+    if (modal) {
+      const inputWrap = modal.querySelector('#promptModalInputWrap');
+      const textareaWrap = modal.querySelector('#promptModalTextareaWrap');
+      const isText = inputWrap && !inputWrap.classList.contains('hidden');
+      const isTextarea = textareaWrap && !textareaWrap.classList.contains('hidden');
+      if (isTextarea) {
+        value = modal.querySelector('#promptModalTextarea')?.value.trim() ?? null;
+      } else if (isText) {
+        value = modal.querySelector('#promptModalInput')?.value.trim() ?? null;
+      } else {
+        value = modal.querySelector('#promptModalColorInput')?.value ?? null;
+      }
+    }
+    const resolve = _promptResolve;
+    _promptResolve = null;
+    const m = window.$('promptModal');
+    if (m) m.classList.add('hidden');
+    resolve(confirmed ? value : null);
+  };
+
+  // Generic Confirm Modal
+  let _confirmResolve = null;
+  window.showConfirmModal = (options) => {
+    const modal = window.$('confirmModal');
+    if (!modal) return Promise.reject(new Error('Confirm modal not found'));
+    const {
+      title = 'تأیید',
+      message = '',
+      icon = 'alert-triangle',
+      iconBg = 'bg-amber-100',
+      iconColor = 'text-amber-600',
+      confirmText = 'تأیید',
+      cancelText = 'انصراف',
+      confirmClass = 'bg-accent hover:bg-accent-hover',
+    } = options || {};
+
+    modal.querySelector('#confirmModalTitle').textContent = title;
+    modal.querySelector('#confirmModalMessage').textContent = message;
+    const iconEl = modal.querySelector('#confirmModalIcon i');
+    iconEl.className = `w-6 h-6 ${iconColor}`;
+    modal.querySelector('#confirmModalIcon').className = `w-12 h-12 rounded-full ${iconBg} flex items-center justify-center mx-auto mb-4`;
+    const confirmBtn = modal.querySelector('[data-confirm-btn]');
+    const cancelBtn = modal.querySelector('[data-cancel-btn]');
+    if (confirmBtn) {
+      confirmBtn.textContent = confirmText;
+      confirmBtn.className = `flex-1 ${confirmClass} text-white px-6 py-2.5 rounded-xl font-medium transition-all`;
+    }
+    if (cancelBtn) cancelBtn.textContent = cancelText;
+
+    modal.classList.remove('hidden');
+
+    return new Promise((resolve) => {
+      _confirmResolve = resolve;
+    });
+  };
+
+  window.hideConfirmModal = () => {
+    const modal = window.$('confirmModal');
+    if (modal) modal.classList.add('hidden');
+    if (_confirmResolve) {
+      _confirmResolve(false);
+      _confirmResolve = null;
+    }
+  };
+
+  window.resolveConfirm = (confirmed) => {
+    if (!_confirmResolve) return;
+    const resolve = _confirmResolve;
+    _confirmResolve = null;
+    const m = window.$('confirmModal');
+    if (m) m.classList.add('hidden');
+    resolve(!!confirmed);
+  };
+
   refreshStatusMap();
 
   window.statusBadge = function (s) {

@@ -16,39 +16,59 @@ function renderAxisCard(axis, idx, total, t) {
   const swatch = isSwatch(axis);
   const vals = axisValues(axis);
   const chips = vals.map((v) => `
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card text-sm">
-      ${swatch ? `<input type="color" data-value-picker="${v.id}" value="${escapeAttr(v.swatch_hex || '#000000')}" class="w-6 h-6 rounded border border-border cursor-pointer" title="رنگ">` : ''}
-      ${swatch && v.swatch_hex ? `<span class="w-4 h-4 rounded-full border border-border shrink-0" style="background:${escapeAttr(v.swatch_hex)}"></span>` : ''}
-      <span>${escapeHtml(v.value)}</span>
-      <button type="button" data-del-value="${v.id}" data-axis-id="${axis.id}" title="حذف مقدار (غیرفعال می‌شود)"
-              class="text-dim hover:text-accent transition-colors text-base leading-none">×</button>
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-border bg-surface text-sm whitespace-nowrap shrink-0 max-w-full">
+      ${swatch ? `<input type="color" data-value-picker="${v.id}" value="${escapeAttr(v.swatch_hex || '#000000')}" class="w-6 h-6 rounded-full border border-border cursor-pointer shrink-0" title="رنگ">` : ''}
+      ${swatch && v.swatch_hex ? `<span class="w-3.5 h-3.5 rounded-full border border-border shrink-0" style="background:${escapeAttr(v.swatch_hex)}" aria-hidden="true"></span>` : ''}
+      <span class="truncate min-w-0">${escapeHtml(v.value)}</span>
+      <button type="button" data-del-value="${v.id}" data-axis-id="${axis.id}" aria-label="حذف ${escapeAttr(v.value)}"
+              class="shrink-0 w-7 h-7 rounded-full bg-body border border-border flex items-center justify-center text-dim hover:text-accent hover:border-accent/40 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+        <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
+      </button>
     </span>`).join('')
     || `<span class="text-xs text-dim">${escapeHtml(t.noValues || 'مقداری تعریف نشده — با Enter یا ویرگول اضافه کنید')}</span>`;
 
   return `
-  <div class="border border-border rounded-2xl p-4 bg-card/50 space-y-3" data-axis-card="${axis.id}">
-    <div class="flex flex-wrap items-center gap-2">
-      <input type="text" data-axis-name="${axis.id}" value="${escapeAttr(axis.name || '')}" placeholder="نام محور، مثلاً: جنس"
-             class="flex-1 min-w-[140px] bg-card border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent outline-none">
-      <select data-axis-type="${axis.id}" class="bg-card border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent outline-none">
-        <option value="text" ${swatch ? '' : 'selected'}>متن</option>
-        <option value="swatch" ${swatch ? 'selected' : ''}>رنگ (دایره رنگی)</option>
-      </select>
-      <div class="flex items-center gap-1">
-        <button type="button" data-axis-up="${axis.id}" ${idx === 0 ? 'disabled' : ''} title="بالا"
-                class="px-2 py-1 rounded-lg border border-border text-muted hover:text-body disabled:opacity-30">↑</button>
-        <button type="button" data-axis-down="${axis.id}" ${idx === total - 1 ? 'disabled' : ''} title="پایین"
-                class="px-2 py-1 rounded-lg border border-border text-muted hover:text-body disabled:opacity-30">↓</button>
-        <button type="button" data-del-axis="${axis.id}" title="حذف محور (فقط غیرفعال می‌شود)"
-                class="px-2 py-1 rounded-lg border border-border text-muted hover:text-accent transition-colors">🗑</button>
+  <div class="border border-border rounded-2xl p-3 sm:p-4 bg-card/40 space-y-3" data-axis-card="${axis.id}">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+      <label class="flex-1 min-w-0 space-y-1">
+        <span class="block text-xs font-medium text-muted">نام محور</span>
+        <input type="text" data-axis-name="${axis.id}" value="${escapeAttr(axis.name || '')}" placeholder="مثلاً: جنس" aria-label="نام محور ${idx + 1}"
+               class="w-full bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+        <p class="hidden text-xs text-accent mt-1" data-error-axis="${axis.id}" role="alert"></p>
+      </label>
+      <label class="w-full sm:w-36 shrink-0 space-y-1">
+        <span class="block text-xs font-medium text-muted">نوع</span>
+        <select data-axis-type="${axis.id}" aria-label="نوع محور"
+                class="w-full bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
+          <option value="text" ${swatch ? '' : 'selected'}>متن</option>
+          <option value="swatch" ${swatch ? 'selected' : ''}>رنگ</option>
+        </select>
+      </label>
+      <div class="flex items-center gap-1.5 self-start sm:self-end pb-0 sm:pb-0 pt-1 sm:pt-5">
+        <button type="button" data-axis-up="${axis.id}" ${idx === 0 ? 'disabled' : ''} aria-label="جابجایی بالا"
+                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-body hover:bg-card disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+          <i data-lucide="chevron-up" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+        <button type="button" data-axis-down="${axis.id}" ${idx === total - 1 ? 'disabled' : ''} aria-label="جابجایی پایین"
+                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-body hover:bg-card disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+          <i data-lucide="chevron-down" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+        <button type="button" data-del-axis="${axis.id}" aria-label="حذف محور"
+                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-accent hover:border-accent/30 hover:bg-accent/5 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+          <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
-    <div class="flex flex-wrap gap-2">${chips}</div>
-    <div class="flex gap-2">
-      <input type="text" data-add-value="${axis.id}" placeholder="مقدار جدید + Enter — مثلاً: نخی (ویرگول جدا می‌کند)"
-             class="flex-1 min-w-[160px] bg-card border border-border rounded-xl px-3 py-2 text-sm text-body placeholder:text-dim focus:border-accent outline-none">
-      ${swatch ? `<input type="color" data-add-hex="${axis.id}" value="#000000" class="w-10 h-10 rounded-lg border border-border bg-card cursor-pointer shrink-0" title="رنگ مقدار جدید">` : ''}
+    <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+      <div class="flex flex-wrap gap-2 min-w-0">${chips}</div>
     </div>
+    <div class="flex gap-2 items-center">
+      <input type="text" data-add-value="${axis.id}" placeholder="مقدار جدید + Enter — مثلاً: نخی (، جدا می‌کند)"
+             aria-label="افزودن مقدار به ${escapeAttr(axis.name || 'محور')}"
+             class="flex-1 min-w-0 bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+      ${swatch ? `<input type="color" data-add-hex="${axis.id}" value="#000000" class="w-10 h-10 rounded-xl border border-border bg-body cursor-pointer shrink-0" title="رنگ مقدار جدید" aria-label="انتخاب رنگ">` : ''}
+    </div>
+    <p class="hidden text-xs mt-1" data-error-add-value="${axis.id}" role="alert" aria-live="polite"></p>
   </div>`;
 }
 
@@ -58,45 +78,45 @@ function renderAxesSection(axes, variants, t) {
     const qty = def.inventory?.quantity ?? '';
     const price = def.price != null && def.price !== '' ? Number(def.price) : '';
     return `
-    <div class="space-y-3">
-      <div class="flex flex-wrap gap-2">
-        <button type="button" data-preset="clothing" class="px-4 py-2 rounded-xl text-sm border border-border bg-card hover:border-accent transition-colors">👕 پوشاک (سایز + رنگ)</button>
-        <button type="button" data-preset="simple" class="px-4 py-2 rounded-xl text-sm border border-accent bg-accent/10 text-body">بدون تنوع ✓</button>
-        <button type="button" data-preset="custom" class="px-4 py-2 rounded-xl text-sm border border-border bg-card hover:border-accent transition-colors">✏️ سفارشی</button>
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button type="button" data-preset="clothing" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i> پوشاک (سایز + رنگ)</button>
+        <button type="button" data-preset="simple" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-accent bg-accent/10 text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> بدون تنوع ✓</button>
+        <button type="button" data-preset="custom" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i> سفارشی</button>
       </div>
-      <div class="border border-border rounded-2xl p-4 bg-card/50 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <label class="block text-muted mb-1 text-xs">قیمت (تومان)</label>
+      <div class="border border-border rounded-2xl p-4 bg-card/40 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <label class="space-y-1">
+          <span class="block text-xs font-medium text-muted">قیمت (تومان)</span>
           <input type="text" id="simpleVariantPrice" data-simple-field="price" inputmode="numeric" value="${price !== '' ? price.toLocaleString('fa-IR') : ''}"
-                 class="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent outline-none">
-        </div>
-        <div>
-          <label class="block text-muted mb-1 text-xs">موجودی</label>
+                 class="w-full bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+        </label>
+        <label class="space-y-1">
+          <span class="block text-xs font-medium text-muted">موجودی</span>
           <input type="number" data-simple-field="quantity" value="${qty}" min="0"
-                 class="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent outline-none">
-        </div>
-        <div>
-          <label class="block text-muted mb-1 text-xs">SKU</label>
+                 class="w-full bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+        </label>
+        <label class="space-y-1">
+          <span class="block text-xs font-medium text-muted">SKU</span>
           <input type="text" data-simple-field="sku" value="${escapeAttr(def.sku || '')}"
-                 class="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent outline-none">
-        </div>
+                 class="w-full bg-body border border-border rounded-xl px-3 py-2.5 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+        </label>
       </div>
-      <p class="text-xs text-muted">محصول ساده = ۰ محور + یک واریانت پیش‌فرض. برای افزودن تنوع، «پوشاک» یا «سفارشی» را بزنید.</p>
+      <p class="text-xs leading-5 text-muted">محصول ساده = ۰ محور + یک واریانت پیش‌فرض. برای افزودن تنوع، «پوشاک» یا «سفارشی» را بزنید.</p>
     </div>`;
   }
   return `
-  <div class="space-y-3">
-    <div class="flex flex-wrap gap-2">
-      <button type="button" data-preset="clothing" class="px-4 py-2 rounded-xl text-sm border border-border bg-card hover:border-accent transition-colors">👕 پوشاک</button>
-      <button type="button" data-preset="simple" class="px-4 py-2 rounded-xl text-sm border border-border bg-card hover:border-accent transition-colors">بدون تنوع</button>
-      <button type="button" data-preset="custom" class="px-4 py-2 rounded-xl text-sm border border-border bg-card hover:border-accent transition-colors">✏️ سفارشی</button>
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <button type="button" data-preset="clothing" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i> پوشاک</button>
+      <button type="button" data-preset="simple" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> بدون تنوع</button>
+      <button type="button" data-preset="custom" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i> سفارشی</button>
     </div>
     <div class="space-y-3" id="axesCards">
       ${axes.map((a, i) => renderAxisCard(a, i, axes.length, t)).join('')}
     </div>
     ${axes.length < 3
-      ? `<button type="button" data-add-axis class="px-4 py-2 rounded-xl text-sm border border-dashed border-border text-muted hover:text-body hover:border-accent transition-colors">+ افزودن محور (حداکثر ۳)</button>`
-      : `<p class="text-xs text-muted">سقف ۳ محور رسیده‌اید.</p>`}
+      ? `<button type="button" data-add-axis class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-dashed border-border bg-transparent text-muted hover:text-body hover:border-accent hover:bg-accent/5 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> افزودن محور (حداکثر ۳)</button>`
+      : `<p class="inline-flex items-center gap-1.5 text-xs text-muted"><i data-lucide="info" class="w-3.5 h-3.5" aria-hidden="true"></i> سقف ۳ محور رسیده‌اید.</p>`}
   </div>`;
 }
 
@@ -105,42 +125,51 @@ const VariantsTab = {
     const active = (axes || []).filter((a) => Number(a.is_active ?? 1) === 1);
     return `
       <div id="productTabVariants" class="space-y-6">
-        <section>
-          <h4 class="text-sm font-bold text-body mb-3">۱. محورها</h4>
+        <section aria-labelledby="axes-heading" class="bg-body border border-border rounded-2xl p-4 md:p-5">
+          <h4 id="axes-heading" class="text-sm font-bold text-body mb-4 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-muted shrink-0">۱</span> محورها</h4>
           <div id="variantAxesPanel">${renderAxesSection(active, variants, t)}</div>
         </section>
-        <section>
-          <h4 class="text-sm font-bold text-body mb-3">۲. پیش‌نمایش تولید</h4>
-          <div id="variantPreviewBox" class="border border-border rounded-2xl p-4 bg-card/50 text-sm text-muted">
+        <section aria-labelledby="preview-heading" class="bg-body border border-border rounded-2xl p-4 md:p-5">
+          <h4 id="preview-heading" class="text-sm font-bold text-body mb-4 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-muted shrink-0">۲</span> پیش‌نمایش تولید</h4>
+          <div id="variantPreviewBox" class="border border-border rounded-xl p-4 bg-card/30 text-sm leading-6 text-muted min-h-[56px]" role="status" aria-live="polite" aria-atomic="true">
             دکمه «پیش‌نمایش» را بزنید تا تعداد واریانت‌های جدید / بدون تغییر / غیرفعال‌شونده نمایش داده شود.
           </div>
-          <div class="flex flex-wrap gap-2 mt-3">
+          <div class="flex flex-col sm:flex-row gap-2 mt-4">
             <button type="button" id="btnPreviewVariants"
-                    class="bg-surface hover:bg-card border border-border text-body px-4 py-2 rounded-xl text-sm transition-colors">
-              پیش‌نمایش
+                    class="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-medium bg-surface border border-border text-body hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+              <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i> پیش‌نمایش
             </button>
             <button type="button" id="btnGenerateVariants"
-                    class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-xl text-sm transition-colors">
-              ${t.generateVariants || 'اعمال و تولید واریانت‌ها'}
+                    class="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-medium bg-accent hover:bg-accent-hover text-white cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
+              <i data-lucide="layers" class="w-4 h-4" aria-hidden="true"></i> ${t.generateVariants || 'اعمال و تولید واریانت‌ها'}
             </button>
           </div>
         </section>
-        <section>
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <h4 class="text-sm font-bold text-body">۳. واریانت‌ها</h4>
-            <div class="flex flex-wrap items-center gap-2 text-xs">
-              <select id="variantFilterValue" class="bg-card border border-border rounded-lg px-2 py-1.5 text-body">
+        <section aria-labelledby="variants-heading" class="bg-body border border-border rounded-2xl p-4 md:p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h4 id="variants-heading" class="text-sm font-bold text-body flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-muted shrink-0">۳</span> واریانت‌ها</h4>
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="sr-only" for="variantFilterValue">فیلتر مقدار</label>
+              <select id="variantFilterValue" class="min-h-[40px] bg-surface border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
                 <option value="">همه مقادیر</option>
               </select>
-              <button type="button" id="btnToggleInactive" class="px-2 py-1.5 rounded-lg border border-border text-muted hover:text-body">نمایش غیرفعال‌ها</button>
+              <button type="button" id="btnToggleInactive" class="inline-flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-muted hover:text-body hover:bg-card cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i> نمایش غیرفعال‌ها</button>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2 mb-3 text-xs">
-            <input type="text" id="bulkPrice" inputmode="numeric" placeholder="قیمت همه (تومان)"
-                   class="w-36 bg-card border border-border rounded-lg px-2 py-1.5 text-body placeholder:text-dim focus:border-accent outline-none">
-            <input type="number" id="bulkQty" min="0" placeholder="موجودی همه"
-                   class="w-32 bg-card border border-border rounded-lg px-2 py-1.5 text-body placeholder:text-dim focus:border-accent outline-none">
-            <button type="button" id="btnBulkApply" class="px-3 py-1.5 rounded-lg bg-surface border border-border hover:bg-card transition-colors">اعمال گروهی</button>
+          <div class="flex flex-col sm:flex-row gap-2 mb-4">
+            <label class="flex-1 min-w-0 space-y-1">
+              <span class="block text-xs font-medium text-muted">قیمت همه</span>
+              <input type="text" id="bulkPrice" inputmode="numeric" placeholder="تومان"
+                     class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+            </label>
+            <label class="w-full sm:w-40 shrink-0 space-y-1">
+              <span class="block text-xs font-medium text-muted">موجودی همه</span>
+              <input type="number" id="bulkQty" min="0" placeholder="۰"
+                     class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+            </label>
+            <div class="flex items-end">
+              <button type="button" id="btnBulkApply" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-surface border border-border hover:bg-card text-sm font-medium text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">اعمال گروهی</button>
+            </div>
           </div>
           <div id="variantTableWrap">${VariantTable.render({ variants, t })}</div>
         </section>
@@ -254,6 +283,15 @@ const VariantsTab = {
       return true;
     };
 
+    function setAddValueError(axisId, msg) {
+      const el = container.querySelector(`[data-error-add-value="${axisId}"]`);
+      if (!el) return;
+      if (!msg) { el.textContent = ''; el.classList.add('hidden'); el.classList.remove('text-accent'); return; }
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      el.classList.add('text-accent');
+    }
+
     /* value input: Enter / , / ، + paste */
     container.addEventListener('keydown', async (e) => {
       const inp = e.target.closest('[data-add-value]');
@@ -263,7 +301,8 @@ const VariantsTab = {
       const axisId = Number(inp.dataset.addValue);
       const raw = inp.value.trim().replace(/،/g, ',');
       const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
-      if (!parts.length) return;
+      if (!parts.length) { setAddValueError(axisId, 'مقداری وارد کنید'); inp.setAttribute('aria-invalid', 'true'); inp.setAttribute('aria-describedby', `err-add-${axisId}`); return; }
+      setAddValueError(axisId, ''); inp.removeAttribute('aria-invalid'); inp.removeAttribute('aria-describedby');
       if (!needId()) return;
       try {
         window.setLoading?.(true);
@@ -274,7 +313,10 @@ const VariantsTab = {
         inp.value = '';
         await reload();
         window.toast?.('مقدار اضافه شد');
-      } catch (err) { window.toast?.(err.message, 'error'); }
+      } catch (err) {
+        const m = err.displayMessage?.() || err.message || 'خطا در افزودن مقدار';
+        setAddValueError(axisId, m); window.toast?.(m, 'error');
+      }
       finally { window.setLoading?.(false); }
     });
 
@@ -287,12 +329,16 @@ const VariantsTab = {
       const axisId = Number(inp.dataset.addValue);
       const parts = text.replace(/،/g, ',').split(/[,،\n]+/).map((s) => s.trim()).filter(Boolean);
       if (!parts.length || !needId()) return;
+      setAddValueError(axisId, '');
       try {
         window.setLoading?.(true);
         for (const part of parts) await api().createAxisValue(productId, axisId, { value: part });
         await reload();
         window.toast?.(`${parts.length.toLocaleString('fa-IR')} مقدار اضافه شد`);
-      } catch (err) { window.toast?.(err.message, 'error'); }
+      } catch (err) {
+        const m = err.displayMessage?.() || err.message || 'خطا در افزودن مقدار';
+        setAddValueError(axisId, m); window.toast?.(m, 'error');
+      }
       finally { window.setLoading?.(false); }
     });
 
@@ -323,17 +369,32 @@ const VariantsTab = {
       }
     });
 
-    /* axis name save on blur */
+    /* axis name save on blur — inline error */
     container.addEventListener('focusout', async (e) => {
       const nameInp = e.target.closest?.('[data-axis-name]');
       if (!nameInp) return;
       const axisId = Number(nameInp.dataset.axisName);
+      const errEl = container.querySelector(`[data-error-axis="${axisId}"]`);
+      const val = nameInp.value.trim();
+      if (!val) {
+        if (errEl) { errEl.textContent = 'نام محور نمی‌تواند خالی باشد'; errEl.classList.remove('hidden'); }
+        nameInp.setAttribute('aria-invalid', 'true');
+        if (errEl) nameInp.setAttribute('aria-describedby', errEl.id || '');
+        return;
+      }
+      nameInp.removeAttribute('aria-invalid'); nameInp.removeAttribute('aria-describedby');
+      if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
       let axes = [];
       try { axes = JSON.parse(container.dataset.axes || '[]'); } catch { /* noop */ }
       const cur = axes.find((a) => Number(a.id) === axisId);
-      if (!cur || cur.name === nameInp.value.trim() || !nameInp.value.trim()) return;
-      try { await api().updateAxis(productId, axisId, { name: nameInp.value.trim() }); await reload(); }
-      catch (err) { window.toast?.(err.message, 'error'); }
+      if (!cur || cur.name === val) return;
+      try { await api().updateAxis(productId, axisId, { name: val }); await reload(); }
+      catch (err) {
+        const m = err.displayMessage?.() || err.message || 'خطا در ذخیره نام';
+        if (errEl) { errEl.textContent = m; errEl.classList.remove('hidden'); }
+        nameInp.setAttribute('aria-invalid', 'true');
+        window.toast?.(m, 'error');
+      }
     });
 
     container.addEventListener('click', async (e) => {
@@ -346,18 +407,37 @@ const VariantsTab = {
           if (kind === 'simple') {
             const axes = JSON.parse(container.dataset.axes || '[]');
             if (!axes.length) { window.toast?.('محصول همین حالا بدون تنوع است'); return; }
-            if (!confirm('همه محورها غیرفعال شوند؟ واریانت‌ها به یک نماینده Default می‌رسند.')) return;
+            const confirmed = await window.showConfirmModal({
+              title: 'تبدیل به محصول ساده',
+              message: 'همه محورها غیرفعال شوند؟ واریانت‌ها به یک نماینده Default می‌رسند.',
+              icon: 'trash-2',
+              iconBg: 'bg-red-100',
+              iconColor: 'text-red-600',
+              confirmText: 'بله، ساده کن',
+              confirmClass: 'bg-red-600 hover:bg-red-700',
+            });
+            if (!confirmed) return;
             for (const a of axes) await api().deleteAxis(productId, a.id);
             await reload();
             window.toast?.('محصول ساده شد');
           } else if (kind === 'clothing') {
             await this._applyClothingPreset(productId, container, reload);
           } else {
-            const name = prompt('نام محور جدید (مثلاً: جنس):', '');
+            const name = await window.showPromptModal({
+              title: 'افزودن محور جدید',
+              message: 'نام محور را وارد کنید (مثلاً: جنس، طول، جنس پارچه)',
+              label: 'نام محور',
+              placeholder: 'مثال: جنس',
+            });
             if (!name?.trim()) return;
             const hasVariants = (JSON.parse(container.dataset.variants || '[]')).filter((v) => Number(v.is_active ?? 1) === 1).length > 1;
             if (hasVariants) {
-              const firstVal = prompt('اولین مقدار این محور (واریانت‌های فعلی به آن وصل می‌شوند):', '');
+              const firstVal = await window.showPromptModal({
+                title: 'مقدار پیش‌فرض',
+                message: 'واریانت‌های فعلی مربوط به کدام مقدار این محور هستند؟',
+                label: 'مقدار اول',
+                placeholder: 'مثال: M',
+              });
               if (!firstVal?.trim()) return;
               await api().createAxisWithAssignment(productId, { name: name.trim(), input_type: 'text', values: [{ value: firstVal.trim() }], assign_existing_to_value: firstVal.trim() });
             } else {
@@ -372,13 +452,23 @@ const VariantsTab = {
 
       if (e.target.closest?.('[data-add-axis]')) {
         if (!needId()) return;
-        const name = prompt('نام محور جدید (مثلاً: جنس):', '');
+        const name = await window.showPromptModal({
+          title: 'افزودن محور جدید',
+          message: 'نام محور را وارد کنید (مثلاً: جنس، طول، جنس پارچه)',
+          label: 'نام محور',
+          placeholder: 'مثال: جنس',
+        });
         if (!name?.trim()) return;
         const hasVariants = (JSON.parse(container.dataset.variants || '[]')).filter((v) => Number(v.is_active ?? 1) === 1).length > 1;
         try {
           window.setLoading?.(true);
           if (hasVariants) {
-            const firstVal = prompt(`محصول واریانت دارد. واریانت‌های فعلی مربوط به کدام مقدار «${name.trim()}» هستند؟`, '');
+            const firstVal = await window.showPromptModal({
+              title: 'مقدار پیش‌فرض',
+              message: `محصول واریانت دارد. واریانت‌های فعلی مربوط به کدام مقدار «${name.trim()}» هستند؟`,
+              label: 'مقدار پیش‌فرض',
+              placeholder: 'مثال: M',
+            });
             if (!firstVal?.trim()) return;
             await api().createAxisWithAssignment(productId, { name: name.trim(), input_type: 'text', values: [{ value: firstVal.trim() }], assign_existing_to_value: firstVal.trim() });
           } else {
@@ -392,7 +482,16 @@ const VariantsTab = {
 
       const delAxis = e.target.closest?.('[data-del-axis]');
       if (delAxis) {
-        if (!confirm('این محور غیرفعال شود؟ (حذف فیزیکی نمی‌شود؛ ترکیب‌ها نماینده می‌گیرند)')) return;
+        const confirmed = await window.showConfirmModal({
+          title: 'غیرفعال‌سازی محور',
+          message: 'این محور غیرفعال شود؟ (حذف فیزیکی نمی‌شود؛ ترکیب‌ها نماینده می‌گیرند)',
+          icon: 'archive',
+          iconBg: 'bg-amber-100',
+          iconColor: 'text-amber-600',
+          confirmText: 'غیرفعال کن',
+          confirmClass: 'bg-amber-600 hover:bg-amber-700',
+        });
+        if (!confirmed) return;
         try { window.setLoading?.(true); await api().deleteAxis(productId, Number(delAxis.dataset.delAxis)); await reload(); }
         catch (err) { window.toast?.(err.message, 'error'); }
         finally { window.setLoading?.(false); }
@@ -443,9 +542,27 @@ const VariantsTab = {
           if ((preview.deactivatingWithOrders || []).length || (preview.deactivatingWithCart || []).length) {
             msg += ' برخی در سفارش/سبد هستند — سالم می‌مانند.';
           }
-          if (!confirm(msg + '\nادامه؟')) return;
+          const confirmed = await window.showConfirmModal({
+            title: 'اعمال و تولید واریانت‌ها',
+            message: msg,
+            icon: 'alert-triangle',
+            iconBg: 'bg-amber-100',
+            iconColor: 'text-amber-600',
+            confirmText: 'بله، ادامه',
+            cancelText: 'انصراف',
+          });
+          if (!confirmed) return;
         } else if (over100) {
-          if (!confirm(msg + '\nادامه؟')) return;
+          const confirmed = await window.showConfirmModal({
+            title: 'تولید بیش از ۱۰۰ واریانت',
+            message: msg + '\nادامه؟',
+            icon: 'alert-triangle',
+            iconBg: 'bg-amber-100',
+            iconColor: 'text-amber-600',
+            confirmText: 'بله، ادامه',
+            cancelText: 'انصراف',
+          });
+          if (!confirmed) return;
         }
         try {
           window.setLoading?.(true);
@@ -501,7 +618,13 @@ const VariantsTab = {
     if (!hasSize) {
       const hasVariants = (JSON.parse(container.dataset.variants || '[]')).filter((v) => Number(v.is_active ?? 1) === 1).length > 1;
       if (hasVariants) {
-        const assign = prompt('محصول واریانت دارد. واریانت‌های فعلی مربوط به کدام سایز هستند؟ (مثلاً M)', 'M');
+        const assign = await window.showPromptModal({
+          title: 'اعمال پیش‌فرض پوشاک',
+          message: 'محصول واریانت دارد. واریانت‌های فعلی مربوط به کدام سایز هستند؟',
+          label: 'سایز پیش‌فرض',
+          placeholder: 'مثال: M',
+          value: 'M',
+        });
         if (!assign?.trim()) return;
         await api.createAxisWithAssignment(productId, {
           name: 'سایز', input_type: 'text',

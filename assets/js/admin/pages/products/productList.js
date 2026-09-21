@@ -105,7 +105,13 @@ window.loadProducts = async function () {
 };
 
 window.deleteProduct = async function (id, name) {
-  if (!confirm(`آیا از حذف "${name}" مطمئن هستید؟`)) return;
+  const ok = await window.showConfirmModal({
+    title: 'حذف محصول',
+    message: `آیا از حذف «${name}» مطمئن هستید؟`,
+    icon: 'trash-2', iconBg: 'bg-red-100', iconColor: 'text-red-600',
+    confirmText: 'حذف', confirmClass: 'bg-red-600 hover:bg-red-700',
+  });
+  if (!ok) return;
   try {
     window.setLoading(true);
     await window.API.products.delete(id);
