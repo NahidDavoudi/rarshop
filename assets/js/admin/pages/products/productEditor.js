@@ -133,7 +133,14 @@ function _bindActiveTab() {
         window.toast?.('تصویر اصلی تنظیم شد');
       },
       onDeleteImage: async (imageId) => {
-        if (!_editingProdId || !confirm('این تصویر حذف شود؟')) return;
+        if (!_editingProdId) return;
+        const ok = await window.showConfirmModal({
+          title: 'حذف تصویر',
+          message: 'این تصویر حذف شود؟',
+          icon: 'trash-2', iconBg: 'bg-red-100', iconColor: 'text-red-600',
+          confirmText: 'حذف', confirmClass: 'bg-red-600 hover:bg-red-700',
+        });
+        if (!ok) return;
         await window.API.products.deleteImage(_editingProdId, imageId);
         document.getElementById(`img-item-${imageId}`)?.remove();
         window.toast?.('تصویر حذف شد');
@@ -233,7 +240,12 @@ function _renderFullPage() {
         await openProductPage(_editingProdId);
       },
       onDeleteImage: async (imageId) => {
-        if (!confirm('این تصویر حذف شود؟')) return;
+        const ok = await window.showConfirmModal({
+          title: 'حذف تصویر', message: 'این تصویر حذف شود؟',
+          icon: 'trash-2', iconBg: 'bg-red-100', iconColor: 'text-red-600',
+          confirmText: 'حذف', confirmClass: 'bg-red-600 hover:bg-red-700',
+        });
+        if (!ok) return;
         await window.API.products.deleteImage(_editingProdId, imageId);
         document.getElementById(`img-item-${imageId}`)?.remove();
       },
@@ -253,14 +265,24 @@ function _renderFullPage() {
   _installBeforeUnload();
 }
 
+async function _confirmDiscard() {
+  if (!_dirty) return true;
+  return window.showConfirmModal({
+    title: 'تغییرات ذخیره‌نشده',
+    message: 'تغییرات ذخیره‌نشده از بین می‌رود. ادامه می‌دهید؟',
+    icon: 'alert-triangle', iconBg: 'bg-amber-100', iconColor: 'text-amber-600',
+    confirmText: 'ادامه', cancelText: 'انصراف',
+  });
+}
+
 function _bindFullPageActions() {
-  document.getElementById('fullPageBack')?.addEventListener('click', () => {
-    if (_dirty && !confirm('تغییرات ذخیره‌نشده از بین می‌رود. ادامه؟')) return;
+  document.getElementById('fullPageBack')?.addEventListener('click', async () => {
+    if (!(await _confirmDiscard())) return;
     _dirty = false;
     window.switchPage?.('products', document.querySelector('[data-page="products"]'));
   });
-  document.getElementById('fullPageCancel')?.addEventListener('click', () => {
-    if (_dirty && !confirm('تغییرات ذخیره‌نشده از بین می‌رود. ادامه؟')) return;
+  document.getElementById('fullPageCancel')?.addEventListener('click', async () => {
+    if (!(await _confirmDiscard())) return;
     _dirty = false;
     window.switchPage?.('products', document.querySelector('[data-page="products"]'));
   });

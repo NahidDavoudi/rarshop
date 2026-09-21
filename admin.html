@@ -280,37 +280,47 @@
 
                 <!-- ========== PRODUCTS PAGE ========== -->
                 <section id="page-products" class="page-section hidden animate-fadeIn">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                        <div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-body" data-admin-text="products.title">
-                                محصولات</h1>
-                            <p class="text-muted mt-1" data-admin-text="products.subtitle">مدیریت محصولات فروشگاه</p>
+                    <div class="flex flex-col gap-4 mb-6 md:mb-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-body" data-admin-text="products.title">
+                                    محصولات</h1>
+                                <p class="text-sm text-muted mt-1" data-admin-text="products.subtitle">مدیریت محصولات فروشگاه</p>
+                            </div>
+                            <button onclick="showProductModal()"
+                                class="inline-flex items-center justify-center gap-2 min-h-[44px] bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl text-sm font-medium cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none shadow-lg shadow-black/10">
+                                <i data-lucide="plus" class="w-5 h-5 shrink-0" aria-hidden="true"></i><span data-admin-text="products.add">افزودن محصول</span>
+                            </button>
                         </div>
-                        <button onclick="showProductModal()"
-                            class="bg-accent hover:bg-accent-hover text-white px-5 py-3 rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg shadow-black/10">
-                            <i data-lucide="plus" class="w-5 h-5"></i><span data-admin-text="products.add">افزودن
-                                محصول</span>
-                        </button>
                     </div>
 
-                    <div class="bg-body border border-border rounded-2xl p-5 mb-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <input type="text" id="productSearch" data-admin-placeholder="products.searchPlaceholder"
-                                placeholder="جستجوی محصول..."
-                                class="bg-card border border-border rounded-xl px-4 py-3 text-body placeholder:text-dim focus:border-accent outline-none">
-                            <select id="productCategoryFilter"
-                                class="bg-card border border-border rounded-xl px-4 py-3 text-body focus:border-accent outline-none">
-                                <option value="">همه دسته‌بندی‌ها</option>
-                            </select>
-                            <select id="productSort"
-                                class="bg-card border border-border rounded-xl px-4 py-3 text-body focus:border-accent outline-none">
-                                <option value="newest">جدیدترین</option>
-                                <option value="price_asc">قیمت: کم به زیاد</option>
-                                <option value="price_desc">قیمت: زیاد به کم</option>
-                            </select>
+                    <div class="bg-body border border-border rounded-2xl p-4 md:p-5 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+                            <label class="md:col-span-2 space-y-1">
+                                <span class="block text-xs font-medium text-muted">جستجو</span>
+                                <input type="text" id="productSearch" data-admin-placeholder="products.searchPlaceholder"
+                                    placeholder="جستجوی محصول..."
+                                    class="w-full min-h-[44px] bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+                            </label>
+                            <label class="space-y-1">
+                                <span class="block text-xs font-medium text-muted">دسته‌بندی</span>
+                                <select id="productCategoryFilter"
+                                    class="w-full min-h-[44px] bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
+                                    <option value="">همه دسته‌بندی‌ها</option>
+                                </select>
+                            </label>
+                            <label class="space-y-1">
+                                <span class="block text-xs font-medium text-muted">مرتب‌سازی</span>
+                                <select id="productSort"
+                                    class="w-full min-h-[44px] bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
+                                    <option value="newest">جدیدترین</option>
+                                    <option value="price_asc">قیمت: کم به زیاد</option>
+                                    <option value="price_desc">قیمت: زیاد به کم</option>
+                                </select>
+                            </label>
                             <button onclick="loadProducts()"
-                                class="bg-accent hover:bg-accent-hover text-white px-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2">
-                                <i data-lucide="search" class="w-4 h-4"></i><span
+                                class="min-h-[44px] bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none flex items-center justify-center gap-2 self-end">
+                                <i data-lucide="search" class="w-4 h-4 shrink-0" aria-hidden="true"></i><span
                                     data-admin-text="products.search">جستجو</span>
                             </button>
                         </div>
@@ -1204,11 +1214,75 @@
                     </div>
                 </form>
             </div>
+</div>
+</div>
+
+<!-- ========== GENERIC PROMPT MODAL ========== -->
+<div id="promptModal"
+    class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-body border border-border rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
+        <div class="p-6 border-b border-border flex items-center justify-between">
+            <h3 id="promptModalTitle" class="text-lg font-bold text-body">عنوان</h3>
+            <button type="button" onclick="window.hidePromptModal()"
+                class="text-dim hover:text-accent hover:bg-accent/10 p-2 rounded-xl transition-all">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <p id="promptModalMessage" class="text-sm text-body"></p>
+            <div id="promptModalInputWrap" class="hidden">
+                <label class="block text-sm font-medium text-body mb-2" id="promptModalLabel"></label>
+                <input type="text" id="promptModalInput"
+                    class="w-full bg-card border border-border rounded-xl px-4 py-3 text-body focus:border-accent outline-none"
+                    placeholder="">
+            </div>
+            <div id="promptModalTextareaWrap" class="hidden">
+                <label class="block text-sm font-medium text-body mb-2" id="promptModalTextareaLabel"></label>
+                <textarea id="promptModalTextarea" rows="3"
+                    class="w-full bg-card border border-border rounded-xl px-4 py-3 text-body focus:border-accent outline-none resize-none"></textarea>
+            </div>
+            <div id="promptModalColorWrap" class="hidden flex items-center gap-3">
+                <label class="block text-sm font-medium text-body">رنگ</label>
+                <input type="color" id="promptModalColorInput" class="w-12 h-12 rounded-xl border border-border bg-card cursor-pointer shrink-0">
+            </div>
+            <div class="flex gap-3 justify-end pt-2">
+                <button type="button" data-cancel-btn onclick="window.hidePromptModal()"
+                    class="flex-1 bg-body hover:bg-surface border border-border text-muted px-6 py-2.5 rounded-xl font-medium transition-all">انصراف</button>
+                <button type="button" data-confirm-btn onclick="window.resolvePrompt(true)"
+                    class="flex-1 bg-accent hover:bg-accent-hover text-white px-6 py-2.5 rounded-xl font-medium transition-all">تأیید</button>
+            </div>
         </div>
     </div>
-    <script src="assets/js/libs/d3.min.js"></script>
-    <script src="assets/js/libs/lucide.min.js"></script>
-    <script type="module" src="assets/js/admin/admin.js"></script>
-</body>
+</div>
 
+<!-- ========== GENERIC CONFIRM MODAL ========== -->
+<div id="confirmModal"
+    class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-body border border-border rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
+        <div class="p-6 border-b border-border flex items-center justify-between">
+            <h3 id="confirmModalTitle" class="text-lg font-bold text-body">تأیید</h3>
+            <button type="button" onclick="window.hideConfirmModal()"
+                class="text-dim hover:text-accent hover:bg-accent/10 p-2 rounded-xl transition-all">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div id="confirmModalIcon" class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-600"></i>
+            </div>
+            <p id="confirmModalMessage" class="text-sm text-body text-center leading-relaxed"></p>
+            <div class="flex gap-3 justify-end pt-4">
+                <button type="button" data-cancel-btn onclick="window.hideConfirmModal()"
+                    class="flex-1 bg-body hover:bg-surface border border-border text-muted px-6 py-2.5 rounded-xl font-medium transition-all">انصراف</button>
+                <button type="button" data-confirm-btn onclick="window.resolveConfirm(true)"
+                    class="flex-1 bg-accent hover:bg-accent-hover text-white px-6 py-2.5 rounded-xl font-medium transition-all">تأیید</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="assets/js/libs/d3.min.js"></script>
+<script src="assets/js/libs/lucide.min.js"></script>
+<script type="module" src="assets/js/admin/admin.js"></script>
+</body>
 </html>
