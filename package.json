@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./assets/css/input.css -o ./assets/css/output.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./assets/css/input.css -o ./assets/css/output.css --watch"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.0",
+    "d3": "^7.9.0",
+    "lucide": "^1.16.0",
+    "navigo": "^8.11.1",
+    "persian-date": "^1.1.0",
+    "swiper": "^12.1.4",
+    "tailwindcss": "^4.3.0"
+  }
+}

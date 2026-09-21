@@ -1,0 +1,2254 @@
+openapi: 3.0.3
+info:
+  title: NadStore API
+  version: 1.0.0
+  description: >
+    All routes are served by the custom dispatcher in `public/index.php`.
+    The actual base URL is: `http://{domain}/index.php?url=`.
+    In docs, routes are shown as path segments for readability (for example
+    `/auth/login` means `?url=auth/login`).
+servers:
+  - url: "http://{domain}"
+    variables:
+      domain:
+        default: localhost
+    description: Tenant domain (or DEFAULT_TENANT_DOMAIN on local environments).
+tags:
+  - name: Authentication
+  - name: Users
+  - name: Products
+  - name: Categories
+  - name: Cart
+  - name: Coupons
+  - name: Orders
+  - name: Password
+  - name: Payment
+  - name: Tenants
+  - name: System
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with phone and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a customer (inactive until phone verification)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: OTP sent to phone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageWithId'
+  /auth/verifyPhone:
+    post:
+      tags: [Authentication]
+      summary: Verify registration OTP and activate account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+      responses:
+        '200':
+          description: OTP verified and tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+  /auth/sendLoginOtp:
+    post:
+      tags: [Authentication]
+      summary: Send OTP for passwordless login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhoneRequest'
+      responses:
+        '200':
+          description: OTP request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageOnly'
+  /auth/verifyLoginOtp:
+    post:
+      tags: [Authentication]
+      summary: Verify OTP and login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token pair refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke a refresh token
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageOnly'
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+  /auth/registerShop:
+    post:
+      tags: [Authentication]
+      summary: Register a tenant shop and tenant admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterShopRequest'
+      responses:
+        '201':
+          description: Store created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterShopResponse'
+
+  /user:
+    get:
+      tags: [Users]
+      summary: List users (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: tenant_id
+          in: query
+          schema:
+            type: integer
+        - name: is_active
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedData'
+  /user/profile:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Profile loaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+    put:
+      tags: [Users]
+      summary: Update current user profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+  /user/changePassword:
+    put:
+      tags: [Users]
+      summary: Change password
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/changePhone:
+    put:
+      tags: [Users]
+      summary: Change phone number
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [new_phone]
+              properties:
+                new_phone:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/getAddresses:
+    get:
+      tags: [Users]
+      summary: List current user addresses
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Addresses list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Address'
+  /user/addAddress:
+    post:
+      tags: [Users]
+      summary: Add address
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '201':
+          description: Address created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /user/updateAddress/{id}:
+    put:
+      tags: [Users]
+      summary: Update user address
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/{id}/updateAddress:
+    put:
+      tags: [Users]
+      summary: Update user address (alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/deleteAddress/{id}:
+    delete:
+      tags: [Users]
+      summary: Delete user address
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/{id}/changeRole:
+    put:
+      tags: [Users]
+      summary: Change user role (superadmin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  type: string
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+  /user/{id}/toggleStatus:
+    put:
+      tags: [Users]
+      summary: Enable or disable user (superadmin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_active]
+              properties:
+                is_active:
+                  type: integer
+                  enum: [0, 1]
+      responses:
+        '200':
+          description: User status changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+  /user/{id}/deleteAddress:
+    delete:
+      tags: [Users]
+      summary: Delete user address (alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /user/changeRole/{id}:
+    put:
+      tags: [Users]
+      summary: Change user role (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  type: string
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+  /user/toggleStatus/{id}:
+    put:
+      tags: [Users]
+      summary: Enable or disable user (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_active]
+              properties:
+                is_active:
+                  type: integer
+                  enum: [0, 1]
+      responses:
+        '200':
+          description: User status changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: List products
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated product list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedData'
+    post:
+      tags: [Products]
+      summary: Create product (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /products/featured:
+    get:
+      tags: [Products]
+      summary: List featured products
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Featured products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+  /products/discounted:
+    get:
+      tags: [Products]
+      summary: List discounted products
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Discounted products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+  /products/byCategory/{categoryId}:
+    get:
+      tags: [Products]
+      summary: List products by category
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Get single product with images
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /products/{id}/update:
+    put:
+      tags: [Products]
+      summary: Update product (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /products/update/{id}:
+    put:
+      tags: [Products]
+      summary: Update product (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /products/{id}/destroy:
+    delete:
+      tags: [Products]
+      summary: Delete product (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /products/destroy/{id}:
+    delete:
+      tags: [Products]
+      summary: Delete product (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /products/{id}/uploadImage:
+    post:
+      tags: [Products]
+      summary: Upload product image (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                alt:
+                  type: string
+                sort_order:
+                  type: integer
+                  default: 0
+      responses:
+        '201':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  alt:
+                    type: string
+
+  /products/uploadImage:
+    post:
+      tags: [Products]
+      summary: Upload product image using product_id in multipart form (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image, product_id]
+              properties:
+                product_id:
+                  type: integer
+                image:
+                  type: string
+                  format: binary
+                alt:
+                  type: string
+                sort_order:
+                  type: integer
+                  default: 0
+      responses:
+        '201':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  alt:
+                    type: string
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List main categories
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Main category list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+    post:
+      tags: [Categories]
+      summary: Create category (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by id + children
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+  /categories/subcategories/{parentId}:
+    get:
+      tags: [Categories]
+      summary: Get subcategories of a parent category
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: parentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subcategories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+  /categories/{id}/update:
+    put:
+      tags: [Categories]
+      summary: Update category (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+  /categories/update/{id}:
+    put:
+      tags: [Categories]
+      summary: Update category (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+  /categories/{id}/destroy:
+    delete:
+      tags: [Categories]
+      summary: Delete category (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /categories/destroy/{id}:
+    delete:
+      tags: [Categories]
+      summary: Delete category (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get user cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Cart with items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+  /cart/addItem:
+    post:
+      tags: [Cart]
+      summary: Add cart item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, quantity]
+              properties:
+                product_id:
+                  type: integer
+                quantity:
+                  type: integer
+      responses:
+        '201':
+          $ref: '#/components/responses/CartResponse'
+  /cart/updateItem/{itemId}:
+    put:
+      tags: [Cart]
+      summary: Update cart item quantity
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/CartResponse'
+  /cart/removeItem/{itemId}:
+    delete:
+      tags: [Cart]
+      summary: Remove cart item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/CartResponse'
+  /cart/clear:
+    post:
+      tags: [Cart]
+      summary: Clear cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      responses:
+        '200':
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartCleared'
+
+  /coupons/validate:
+    post:
+      tags: [Coupons]
+      summary: Validate coupon code
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, order_total]
+              properties:
+                code:
+                  type: string
+                order_total:
+                  type: number
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponValidationResponse'
+  /coupons:
+    get:
+      tags: [Coupons]
+      summary: List coupons (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Coupons list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+    post:
+      tags: [Coupons]
+      summary: Create coupon (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+      responses:
+        '201':
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponResponse'
+  /coupons/{id}/update:
+    put:
+      tags: [Coupons]
+      summary: Update coupon (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+      responses:
+        '200':
+          description: Coupon updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponResponse'
+  /coupons/update/{id}:
+    put:
+      tags: [Coupons]
+      summary: Update coupon (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CouponRequest'
+      responses:
+        '200':
+          description: Coupon updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponResponse'
+  /coupons/{id}/destroy:
+    delete:
+      tags: [Coupons]
+      summary: Delete coupon (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /coupons/destroy/{id}:
+    delete:
+      tags: [Coupons]
+      summary: Delete coupon (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: List user orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: User orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+    post:
+      tags: [Orders]
+      summary: Place new order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address_id]
+              properties:
+                address_id:
+                  type: integer
+                coupon_code:
+                  type: string
+                  nullable: true
+                notes:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get one order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/{id}/cancel:
+    put:
+      tags: [Orders]
+      summary: Cancel order (pending only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/cancel/{id}:
+    put:
+      tags: [Orders]
+      summary: Cancel order (pending only, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/{id}/updateStatus:
+    put:
+      tags: [Orders]
+      summary: Change order status (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, confirmed, processing, shipped, delivered, cancelled, refunded]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/updateStatus/{id}:
+    put:
+      tags: [Orders]
+      summary: Change order status (admin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, confirmed, processing, shipped, delivered, cancelled, refunded]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /password/forgot:
+    post:
+      tags: [Password]
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Reset token generation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordForgotResponse'
+  /password/reset:
+    post:
+      tags: [Password]
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageOnly'
+
+  /payment/verify:
+    get:
+      tags: [Payment]
+      summary: Verify payment callback
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: authority
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: order_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentVerifySuccess'
+        '400':
+          description: Verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Payment]
+      summary: Verify payment callback (POST)
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                authority:
+                  type: string
+                order_id:
+                  type: integer
+          application/json:
+            schema:
+              type: object
+              properties:
+                authority:
+                  type: string
+                order_id:
+                  type: integer
+      responses:
+        '200':
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentVerifySuccess'
+        '400':
+          description: Verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Tenants list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+    post:
+      tags: [Tenants]
+      summary: Create tenant (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleData'
+  /tenants/{id}:
+    get:
+      tags: [Tenants]
+      summary: Get tenant by id (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tenant detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleData'
+  /tenants/{id}/update:
+    put:
+      tags: [Tenants]
+      summary: Update tenant (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+      responses:
+        '200':
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleData'
+  /tenants/{id}/destroy:
+    delete:
+      tags: [Tenants]
+      summary: Delete tenant (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /tenants/update/{id}:
+    put:
+      tags: [Tenants]
+      summary: Update tenant (superadmin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+      responses:
+        '200':
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleData'
+  /tenants/destroy/{id}:
+    delete:
+      tags: [Tenants]
+      summary: Delete tenant (superadmin, alternate route)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - $ref: '#/components/parameters/CSRF'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+
+  /system/dashboard:
+    get:
+      tags: [System]
+      summary: Dashboard stats (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+  /system/logs:
+    get:
+      tags: [System]
+      summary: Get logs (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: type
+          in: query
+          schema:
+            type: string
+            default: error
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /system/clearLogs:
+    delete:
+      tags: [System]
+      summary: Clear logs by type (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+        - name: type
+          in: query
+          schema:
+            type: string
+            default: error
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /system/health:
+    get:
+      tags: [System]
+      summary: Health check (superadmin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XTenant'
+      responses:
+        '200':
+          description: Health info
+          content:
+            application/json:
+              schema:
+                type: object
+        '503':
+          description: Unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT issued by auth endpoints.
+  parameters:
+    XTenant:
+      name: X-Tenant
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Tenant domain override (optional for local default tenant)
+    CSRF:
+      name: X-CSRF-TOKEN
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Required for most POST/PUT/DELETE requests unless endpoint is explicitly exempt in middleware.
+  responses:
+    MessageResponse:
+      description: Message response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageOnly'
+    CartResponse:
+      description: Cart payload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CartResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        status:
+          type: integer
+    MessageOnly:
+      type: object
+      properties:
+        message:
+          type: string
+    MessageWithId:
+      type: object
+      properties:
+        message:
+          type: string
+        user_id:
+          type: integer
+    IdResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    PhoneRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+    OtpVerifyRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+    AuthLoginRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+    RegisterRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+        full_name:
+          type: string
+        email:
+          type: string
+    RegisterShopRequest:
+      type: object
+      required: [store_name, domain, phone, password]
+      properties:
+        store_name:
+          type: string
+        domain:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+        full_name:
+          type: string
+    RegisterShopResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        tenant_id:
+          type: integer
+        domain:
+          type: string
+        admin_login:
+          type: object
+          properties:
+            url:
+              type: string
+            phone:
+              type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenant_id:
+          type: integer
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        full_name:
+          type: string
+          nullable: true
+        role:
+          type: string
+        is_active:
+          type: integer
+    ChangePasswordRequest:
+      type: object
+      required: [old_password, new_password]
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+    Address:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        tenant_id:
+          type: integer
+        label:
+          type: string
+        province:
+          type: string
+          nullable: true
+        city:
+          type: string
+        postal_code:
+          type: string
+          nullable: true
+        full_address:
+          type: string
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        is_default:
+          type: integer
+    AddressRequest:
+      type: object
+      properties:
+        label:
+          type: string
+        province:
+          type: string
+        city:
+          type: string
+        postal_code:
+          type: string
+        full_address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        is_default:
+          type: integer
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenant_id:
+          type: integer
+        name:
+          type: string
+    ProductRequest:
+      type: object
+      properties:
+        tenant_id:
+          type: integer
+        category_id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        compare_at_price:
+          type: number
+        sku:
+          type: string
+        stock_quantity:
+          type: integer
+        is_active:
+          type: integer
+        is_featured:
+          type: integer
+        weight:
+          type: number
+        meta_title:
+          type: string
+        meta_description:
+          type: string
+    ProductResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenant_id:
+          type: integer
+        parent_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+          nullable: true
+        is_active:
+          type: integer
+        sort_order:
+          type: integer
+    CategoryRequest:
+      type: object
+      properties:
+        parent_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        sort_order:
+          type: integer
+    CategoryResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Category'
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: integer
+        tenant_id:
+          type: integer
+        code:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        min_order_amount:
+          type: number
+        starts_at:
+          type: string
+        expires_at:
+          type: string
+    CouponRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        min_order_amount:
+          type: number
+        max_usage:
+          type: integer
+        starts_at:
+          type: string
+        expires_at:
+          type: string
+    CouponResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Coupon'
+    CouponValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        code:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        discount:
+          type: number
+        final_total:
+          type: number
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        price_at_add:
+          type: number
+    CartResponse:
+      type: object
+      properties:
+        cart_id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+    CartCleared:
+      type: object
+      properties:
+        message:
+          type: string
+        cart_id:
+          type: integer
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        tenant_id:
+          type: integer
+        address_id:
+          type: integer
+        status:
+          type: string
+        subtotal:
+          type: number
+        shipping_cost:
+          type: number
+        tax_amount:
+          type: number
+        discount_amount:
+          type: number
+        total:
+          type: number
+        payment_method:
+          type: string
+          nullable: true
+        payment_status:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    OrderResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Order'
+    PaginatedData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        pagination:
+          type: object
+    ListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+    SingleData:
+      type: object
+      properties:
+        data:
+          type: object
+    TenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        settings:
+          type: string
+        is_active:
+          type: integer
+    PasswordForgotResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+          nullable: true
+    PaymentVerifySuccess:
+      type: object
+      properties:
+        message:
+          type: string
+        ref_id:
+          type: string

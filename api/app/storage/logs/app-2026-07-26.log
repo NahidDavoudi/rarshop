@@ -1,0 +1,1 @@
+[2026-07-26 10:18:40] app.ERROR: Class "Api\App\Modules\Size\SizeService" not found {"request_id":"859b6b0fef1a182392c724f64161e413","ip":"::1","method":"GET","endpoint":"/rarshop/api/v1/admin/size","user_id":1,"exception":"Error","file":"C:\\xampp1\\htdocs\\rarshop\\api\\app\\Modules\\Size\\SizeController.php","line":15}

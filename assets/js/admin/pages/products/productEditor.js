@@ -1,0 +1,457 @@
+import GeneralTab from './tabs/generalTab.js';
+import VariantsTab from './tabs/variantsTab.js';
+import MediaTab from './tabs/mediaTab.js';
+
+let _editingProdId = null;
+let _categories = [];
+let _currentProduct = null;
+let _activeTab = 'general';
+let _isFullPage = false;
+let _dirty = false;
+let _fullPageInit = false;
+
+function _t(path, fallback) {
+  return window.getAdminText?.(path, fallback) ?? fallback;
+}
+
+function _texts() {
+  return {
+    name: _t('products.name', 'نام محصول'),
+    slug: _t('products.slug', 'شناسه (slug)'),
+    status: _t('products.status', 'وضعیت'),
+    statusDraft: _t('products.statusDraft', 'پیش‌نویس'),
+    statusActive: _t('products.statusActive', 'فعال'),
+    statusArchived: _t('products.statusArchived', 'آرشیو'),
+    shortDesc: _t('products.shortDesc', 'توضیح کوتاه'),
+    fullDesc: _t('products.fullDesc', 'توضیحات کامل'),
+    category: _t('products.category', 'دسته‌بندی'),
+    selectCategory: _t('products.selectCategory', 'انتخاب دسته‌بندی'),
+    productType: _t('products.productType', 'نوع محصول'),
+    typeSimple: _t('products.typeSimple', 'ساده'),
+    typeVariable: _t('products.typeVariable', 'چند واریانت'),
+    price: _t('products.price', 'قیمت'),
+    stock: _t('products.stock', 'موجودی'),
+    featured: _t('products.featured', 'محصول ویژه'),
+    generateVariants: _t('products.generateVariants', 'تولید واریانت‌ها'),
+    selectStandardSizes: _t('products.selectStandardSizes', 'انتخاب سایزهای استاندارد'),
+    addColor: _t('products.addColor', 'افزودن رنگ'),
+    addColorHint: _t('products.addColorHint', 'رنگ جدید به لیست اضافه می‌شود.'),
+    colorNameLabel: _t('products.colorNameLabel', 'نام رنگ'),
+    colorNamePlaceholder: _t('products.colorNamePlaceholder', 'مثال: قرمز'),
+    colorHexLabel: _t('products.colorHexLabel', 'کد رنگ'),
+    noValues: _t('products.noValues', 'مقداری تعریف نشده'),
+    noAxes: _t('products.noAxes', 'محور واریانتی تعریف نشده'),
+    variantsHint: _t('products.variantsHint', 'محورهای واریانت را انتخاب و تولید کنید.'),
+    variantTitle: _t('products.variantTitle', 'عنوان'),
+    emptyVariants: _t('products.emptyVariants', 'واریانتی وجود ندارد'),
+    addImage: _t('products.addImage', 'افزودن تصویر'),
+    mainImage: _t('products.mainImage', 'اصلی'),
+    tabGeneral: _t('products.tabGeneral', 'عمومی'),
+    tabVariants: _t('products.tabVariants', 'واریانت‌ها'),
+    tabMedia: _t('products.tabMedia', 'تصاویر'),
+  };
+}
+
+function _axesOfProduct(p) {
+  return p?.variant_axes || [];
+}
+
+function _renderTabs() {
+  const panel = document.getElementById('productTabPanels');
+  if (!panel) return;
+  const t = _texts();
+  panel.innerHTML = `
+    <div class="product-tab-panel ${_activeTab === 'general' ? '' : 'hidden'}" data-tab-panel="general">
+      ${GeneralTab.render({ t, categories: _categories })}
+    </div>
+    <div class="product-tab-panel ${_activeTab === 'variants' ? '' : 'hidden'}" data-tab-panel="variants">
+      ${VariantsTab.render({ axes: _axesOfProduct(_currentProduct), variants: _currentProduct?.variants || [], t })}
+    </div>
+    <div class="product-tab-panel ${_activeTab === 'media' ? '' : 'hidden'}" data-tab-panel="media">
+      ${MediaTab.render({ images: _currentProduct?.images || [], t })}
+    </div>`;
+  _bindActiveTab();
+}
+
+function _switchTab(name) {
+  _activeTab = name;
+  document.querySelectorAll('.product-editor-tab').forEach((btn) => {
+    btn.classList.toggle('border-accent', btn.dataset.tab === name);
+    btn.classList.toggle('text-accent', btn.dataset.tab === name);
+    btn.classList.toggle('border-transparent', btn.dataset.tab !== name);
+    btn.classList.toggle('text-muted', btn.dataset.tab !== name);
+  });
+  document.querySelectorAll('.product-tab-panel').forEach((p) => {
+    p.classList.toggle('hidden', p.dataset.tabPanel !== name);
+  });
+}
+
+function _bindActiveTab() {
+  const t = _texts();
+  const generalPanel = document.querySelector('[data-tab-panel="general"]');
+  const variantsPanel = document.querySelector('[data-tab-panel="variants"]');
+  const mediaPanel = document.querySelector('[data-tab-panel="media"]');
+
+  if (generalPanel) {
+    GeneralTab.bind(generalPanel);
+    if (_currentProduct) GeneralTab.fill(_currentProduct);
+    window.attachPriceFormatter?.('productPrice');
+    generalPanel.addEventListener('input', () => { _dirty = true; }, { once: false });
+  }
+
+  if (variantsPanel) {
+    // new axes API: VariantsTab.bind expects {productId, t, onChanged}
+    if (_editingProdId) {
+      VariantsTab.bind(variantsPanel, {
+        productId: _editingProdId,
+        t,
+        onChanged: async () => {
+          // refresh product after axes/variants change
+          try {
+            const raw = await window.API.products.get(_editingProdId);
+            _currentProduct = raw?.data || raw;
+          } catch { /* noop */ }
+        },
+      });
+    } else {
+      variantsPanel.innerHTML = `
+        <div class="border border-dashed border-border rounded-2xl p-8 text-center bg-card/30">
+          <p class="text-sm text-muted mb-2">ابتدا اطلاعات پایه را ذخیره کنید</p>
+          <p class="text-xs text-dim">بعد از ذخیره، محورها و واریانت‌ها فعال می‌شوند.</p>
+        </div>` + variantsPanel.innerHTML;
+    }
+    VariantsTab.bindPriceInputs(variantsPanel);
+  }
+
+  if (mediaPanel) {
+    MediaTab.bind(mediaPanel, {
+      onPreviewFiles: (input) => window.uploadProductImage?.(input),
+      onSetMain: async (imageId) => {
+        if (!_editingProdId) return;
+        await window.API.products.setMainImage(_editingProdId, imageId);
+        await openProductEditor(_editingProdId);
+        window.toast?.('تصویر اصلی تنظیم شد');
+      },
+      onDeleteImage: async (imageId) => {
+        if (!_editingProdId || !confirm('این تصویر حذف شود؟')) return;
+        await window.API.products.deleteImage(_editingProdId, imageId);
+        document.getElementById(`img-item-${imageId}`)?.remove();
+        window.toast?.('تصویر حذف شد');
+      },
+    });
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+async function _loadMeta() {
+  const catsRes = await window.API.categories.list();
+  _categories = Array.isArray(catsRes) ? catsRes : (catsRes.data || []);
+}
+
+/* ── Full-page helpers ── */
+function _fullPageShell() {
+  return document.getElementById('page-productEdit');
+}
+
+function _renderFullPage() {
+  const shell = _fullPageShell();
+  if (!shell) return;
+  const t = _texts();
+  const isNew = !_editingProdId;
+  const title = isNew ? _t('products.modalAdd', 'افزودن محصول') : _t('products.modalEdit', 'ویرایش محصول');
+  const locked = isNew;
+  shell.innerHTML = `
+    <div class="max-w-5xl mx-auto space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-body">${title}</h1>
+          <p class="text-sm text-muted mt-1">${isNew ? 'اطلاعات پایه را ذخیره کنید تا بخش‌های بعدی فعال شوند.' : 'همه بخش‌ها قابل ویرایش هستند.'}</p>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" id="fullPageBack" class="px-4 py-2 rounded-xl border border-border text-muted hover:text-body bg-body">بازگشت به لیست</button>
+        </div>
+      </div>
+
+      <!-- sticky anchor nav -->
+      <div class="sticky top-0 z-20 bg-surface/80 backdrop-blur rounded-2xl border border-border p-2 flex flex-wrap gap-2">
+        <a href="#card-general" class="px-3 py-1.5 rounded-lg text-sm bg-accent text-white">عمومی</a>
+        <a href="#card-media" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">تصاویر</a>
+        <a href="#card-axes" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">محورها</a>
+        <a href="#card-variants" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">واریانت‌ها</a>
+      </div>
+
+      <div id="card-general" class="bg-body border border-border rounded-2xl p-6">
+        <h3 class="font-bold text-body mb-4">اطلاعات پایه</h3>
+        <div id="fullGeneralWrap">${GeneralTab.render({ t, categories: _categories })}</div>
+      </div>
+
+      <div id="card-media" class="bg-body border border-border rounded-2xl p-6 ${locked ? 'opacity-60' : ''}">
+        <h3 class="font-bold text-body mb-4">تصاویر</h3>
+        ${locked ? '<p class="text-xs text-muted mb-3">ابتدا اطلاعات پایه را ذخیره کنید.</p>' : ''}
+        <div class="${locked ? 'pointer-events-none' : ''}" id="fullMediaWrap">${MediaTab.render({ images: _currentProduct?.images || [], t })}</div>
+      </div>
+
+      <div id="card-axes" class="bg-body border border-border rounded-2xl p-6 ${locked ? 'opacity-60' : ''}">
+        <h3 class="font-bold text-body mb-4">محورها (حداکثر ۳)</h3>
+        ${locked ? '<p class="text-xs text-muted mb-3">ابتدا اطلاعات پایه را ذخیره کنید.</p>' : ''}
+        <div class="${locked ? 'pointer-events-none' : ''}" id="fullAxesWrap">${VariantsTab.render({ axes: _axesOfProduct(_currentProduct), variants: _currentProduct?.variants || [], t })}</div>
+      </div>
+
+      <div id="card-variants" class="bg-body border border-border rounded-2xl p-6 ${locked ? 'opacity-60' : ''}">
+        <h3 class="font-bold text-body mb-4">واریانت‌ها</h3>
+        ${locked ? '<p class="text-xs text-muted mb-3">ابتدا اطلاعات پایه را ذخیره کنید.</p>' : ''}
+        <div id="fullVariantsTableWrap"></div>
+      </div>
+
+      <!-- sticky save bar -->
+      <div class="sticky bottom-0 z-20 bg-body/90 backdrop-blur border border-border rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-center">
+        <p class="text-xs text-muted" id="fullPageDirtyHint">${_dirty ? 'تغییرات ذخیره‌نشده دارید' : 'آماده ذخیره'}</p>
+        <div class="flex gap-2">
+          <button type="button" id="fullPageCancel" class="px-6 py-2.5 rounded-xl border border-border text-muted hover:text-body bg-surface">انصراف</button>
+          <button type="button" id="fullPageSave" class="px-8 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-medium">ذخیره</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // fill general
+  if (_currentProduct) GeneralTab.fill(_currentProduct);
+  window.attachPriceFormatter?.('productPrice');
+  const gWrap = document.getElementById('fullGeneralWrap');
+  if (gWrap) {
+    GeneralTab.bind(gWrap, { onTypeChange: (v) => { _dirty = true; } });
+    gWrap.addEventListener('input', () => { _dirty = true; document.getElementById('fullPageDirtyHint').textContent = 'تغییرات ذخیره‌نشده دارید'; });
+  }
+  const mWrap = document.getElementById('fullMediaWrap');
+  if (mWrap && !_isFullPage) { /* already */ }
+  if (mWrap && !locked) {
+    MediaTab.bind(mWrap, {
+      onPreviewFiles: (input) => window.uploadProductImage?.(input),
+      onSetMain: async (imageId) => {
+        await window.API.products.setMainImage(_editingProdId, imageId);
+        await openProductPage(_editingProdId);
+      },
+      onDeleteImage: async (imageId) => {
+        if (!confirm('این تصویر حذف شود؟')) return;
+        await window.API.products.deleteImage(_editingProdId, imageId);
+        document.getElementById(`img-item-${imageId}`)?.remove();
+      },
+    });
+  }
+  const axesWrap = document.getElementById('fullAxesWrap');
+  if (axesWrap && !locked) {
+    VariantsTab.bind(axesWrap, { productId: _editingProdId, t, onChanged: async () => {
+      const raw = await window.API.products.get(_editingProdId);
+      _currentProduct = raw?.data || raw;
+    }});
+    VariantsTab.bindPriceInputs(axesWrap);
+  }
+  // variants table lives inside axesWrap already; keep sync
+  if (window.lucide) lucide.createIcons();
+  _bindFullPageActions();
+  _installBeforeUnload();
+}
+
+function _bindFullPageActions() {
+  document.getElementById('fullPageBack')?.addEventListener('click', () => {
+    if (_dirty && !confirm('تغییرات ذخیره‌نشده از بین می‌رود. ادامه؟')) return;
+    _dirty = false;
+    window.switchPage?.('products', document.querySelector('[data-page="products"]'));
+  });
+  document.getElementById('fullPageCancel')?.addEventListener('click', () => {
+    if (_dirty && !confirm('تغییرات ذخیره‌نشده از بین می‌رود. ادامه؟')) return;
+    _dirty = false;
+    window.switchPage?.('products', document.querySelector('[data-page="products"]'));
+  });
+  document.getElementById('fullPageSave')?.addEventListener('click', async () => {
+    const general = GeneralTab.collect();
+    if (!general.name) { window.toast?.('نام محصول الزامی است', 'error'); return; }
+    if (general.product_type === 'simple' && !general.price) {
+      window.toast?.('قیمت محصول الزامی است', 'error'); return;
+    }
+    try {
+      window.setLoading?.(true);
+      let productId = _editingProdId;
+      if (productId) {
+        await window.API.products.update(productId, general);
+      } else {
+        const res = await window.API.products.create({ ...general, status: general.status || 'draft' });
+        productId = res?.id || res?.data?.id;
+        _editingProdId = productId;
+        _dirty = false;
+        window.toast?.('پیش‌نویس ذخیره شد — ادامه ویرایش');
+        history.replaceState(null, '', '#product-edit/' + productId);
+        await openProductPage(productId);
+        window.setLoading?.(false);
+        return;
+      }
+      const axesWrap = document.getElementById('fullAxesWrap');
+      if (axesWrap) {
+        const rows = VariantsTab.collectVariants(axesWrap);
+        if (rows.length) await window.API.products.bulkUpdateVariants(productId, rows);
+      }
+      await _uploadPendingImages(productId);
+      window.setLoading?.(false);
+      window.toast?.('محصول ذخیره شد');
+      _dirty = false;
+      document.getElementById('fullPageDirtyHint').textContent = 'ذخیره شد';
+      await openProductPage(productId);
+      window.loadProducts?.();
+    } catch (err) {
+      window.setLoading?.(false);
+      window.toast?.(err.message, 'error');
+    }
+  });
+}
+
+function _installBeforeUnload() {
+  if (_fullPageInit) return;
+  _fullPageInit = true;
+  window.addEventListener('beforeunload', (e) => {
+    if (!_dirty || !_isFullPage) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+}
+
+export async function openProductPage(id = null) {
+  _isFullPage = true;
+  _editingProdId = id ? Number(id) : null;
+  _activeTab = 'general';
+  window.setLoading?.(true);
+  try {
+    await _loadMeta();
+    _currentProduct = id ? (await window.API.products.get(id)) : null;
+    if (_currentProduct?.data) _currentProduct = _currentProduct.data;
+    // hide all page-sections, show productEdit full page
+    document.querySelectorAll('.page-section').forEach((s) => s.classList.add('hidden'));
+    const editSec = document.getElementById('page-productEdit');
+    if (editSec) editSec.classList.remove('hidden');
+    document.querySelectorAll('.nav-link').forEach((a) => a.classList.remove('admin-nav-active'));
+    _renderFullPage();
+    window.setLoading?.(false);
+    _dirty = false;
+    if (id) history.replaceState(null, '', '#product-edit/' + id);
+    else history.replaceState(null, '', '#product-create');
+  } catch (e) {
+    window.setLoading?.(false);
+    window.toast?.(e.message, 'error');
+  }
+}
+
+export async function openProductEditor(id = null) {
+  // keep modal path for backwards-compat: now delegates to full page
+  // if caller explicitly wants modal (legacy), still support via flag
+  const useFullPage = true;
+  if (useFullPage) return openProductPage(id);
+  try {
+    window.setLoading?.(true);
+    await _loadMeta();
+    _editingProdId = id;
+    _activeTab = 'general';
+    _currentProduct = id ? (await window.API.products.get(id)) : null;
+    if (_currentProduct?.data) _currentProduct = _currentProduct.data;
+    window.setText?.('productModalTitle', id ? _t('products.modalEdit', 'ویرایش محصول') : _t('products.modalAdd', 'افزودن محصول'));
+    window.setText?.('productSubmitText', id ? _t('products.update', 'بروزرسانی') : _t('products.save', 'ذخیره محصول'));
+    const pid = document.getElementById('productId');
+    if (pid) pid.value = id || '';
+    _renderTabs();
+    window.setLoading?.(false);
+    window.showModal?.('productModal');
+  } catch (e) {
+    window.setLoading?.(false);
+    window.toast?.(e.message, 'error');
+  }
+}
+
+export function initProductEditor() {
+  document.querySelectorAll('.product-editor-tab').forEach((btn) => {
+    btn.addEventListener('click', () => _switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('productForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const general = GeneralTab.collect();
+    if (!general.name) { window.toast?.('نام محصول الزامی است', 'error'); return; }
+    if (general.product_type === 'simple' && !general.price) {
+      window.toast?.('قیمت محصول الزامی است', 'error');
+      return;
+    }
+    try {
+      window.setLoading?.(true);
+      let productId = _editingProdId;
+      if (productId) {
+        await window.API.products.update(productId, general);
+      } else {
+        const res = await window.API.products.create(general);
+        productId = res?.id || res?.data?.id;
+        _editingProdId = productId;
+      }
+      const variantsPanel = document.querySelector('[data-tab-panel="variants"]');
+      if (variantsPanel && general.product_type === 'variable') {
+        const variantRows = VariantsTab.collectVariants(variantsPanel);
+        if (variantRows.length) await window.API.products.bulkUpdateVariants(productId, variantRows);
+      }
+      await _uploadPendingImages(productId);
+      window.setLoading?.(false);
+      window.toast?.(productId && _editingProdId ? 'محصول بروزرسانی شد' : 'محصول ایجاد شد');
+      _dirty = false;
+      window.hideModal?.('productModal');
+      // also close full page if open
+      document.getElementById('page-productEdit')?.classList.add('hidden');
+      _isFullPage = false;
+      window.loadProducts?.();
+    } catch (err) {
+      window.setLoading?.(false);
+      window.toast?.(err.message, 'error');
+    }
+  });
+
+  // hash routing for full page
+  window.addEventListener('hashchange', () => {
+    const h = location.hash || '';
+    if (h.startsWith('#product-edit/')) {
+      const id = h.replace('#product-edit/', '').trim();
+      if (id) openProductPage(Number(id));
+    } else if (h === '#product-create') {
+      openProductPage(null);
+    } else if (_isFullPage && !h.startsWith('#product-')) {
+      _isFullPage = false;
+      _dirty = false;
+    }
+  });
+  // initial hash
+  const h0 = location.hash || '';
+  if (h0.startsWith('#product-edit/')) {
+    const id = h0.replace('#product-edit/', '').trim();
+    if (id) setTimeout(() => openProductPage(Number(id)), 300);
+  } else if (h0 === '#product-create') {
+    setTimeout(() => openProductPage(null), 300);
+  }
+}
+
+async function _uploadPendingImages(productId) {
+  const imgInput = document.getElementById('productImageInput');
+  if (!imgInput?.files?.length) return;
+  const files = Array.from(imgInput.files);
+  let firstImage = !(_currentProduct?.images?.length);
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    try {
+      await window.API.products.uploadImage(productId, f, firstImage, 0);
+      firstImage = false;
+    } catch (e) {
+      window.toast?.(`خطا در آپلود ${f.name}: ${e.message}`, 'error');
+    }
+  }
+  imgInput.value = '';
+  document.querySelectorAll('.upload-overlay').forEach((el) => el.remove());
+}
+
+// Legacy globals — now point to full page
+window.showProductModal = () => openProductPage(null);
+window.editProduct = (id) => openProductPage(id);
+window.openProductPage = openProductPage;
+
+export default { openProductEditor, openProductPage, initProductEditor };

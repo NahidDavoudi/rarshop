@@ -1,0 +1,7 @@
+[2026-08-06 08:23:01] app.INFO: BitPay callback received {"trans_id":"37452423","id_get":"37446261"}
+[2026-08-06 08:23:01] app.INFO: Verifying payment {"trans_id":"37452423","id_get":"37446261"}
+[2026-08-06 08:23:02] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"621986******2679\",\"factorId\":\"49\"}","curl_error":""}
+[2026-08-06 14:15:12] app.DEBUG: address_not_belong_to_user {"address_id":0,"user_id":1}
+[2026-08-06 14:54:49] app.ERROR: Class "App\Modules\Users\Logger" not found {"request_id":"10c8551b69ffbd420ee8357f593e97bc","ip":"89.198.119.110","method":"DELETE","endpoint":"/api/v1/users/me/addresses/14","user_id":1,"exception":"Error","file":"/home/rarshopi/public_html/api/app/Modules/Users/UsersController.php","line":112}
+[2026-08-06 14:54:50] app.ERROR: Class "App\Modules\Users\Logger" not found {"request_id":"4a67d1d19d395eb24162cdad4003ddd1","ip":"89.198.119.110","method":"DELETE","endpoint":"/api/v1/users/me/addresses/14","user_id":1,"exception":"Error","file":"/home/rarshopi/public_html/api/app/Modules/Users/UsersController.php","line":112}
+[2026-08-06 14:55:15] app.DEBUG: deleteAddress_called {"address_id":14,"user_id":1}

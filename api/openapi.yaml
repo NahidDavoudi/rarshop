@@ -1,0 +1,2801 @@
+openapi: 3.0.3
+info:
+  title: NadCore Universal E-Commerce API
+  description: |
+    REST API for NadCore PHP backend.
+    All responses use envelope format `{ success, message, data, errors? }`.
+    Monetary values are in Tomans (integer).
+  version: 1.0.0
+  contact:
+    name: NadCorp
+
+servers:
+  - url: /restApi/api/v1
+    description: Local XAMPP (APP_BASE_PATH=/restApi)
+  - url: /api/v1
+    description: Production root
+
+tags:
+  - name: Auth
+    description: Authentication (OTP, password, session)
+  - name: Users
+    description: User profile and addresses
+  - name: Products
+    description: Product catalog
+  - name: Categories
+    description: Product categories
+  - name: Cart
+    description: Shopping cart
+  - name: Orders
+    description: Order management
+  - name: Discounts
+    description: Discount codes
+  - name: Settings
+    description: Shop configuration
+  - name: Admin
+    description: Admin-only endpoints (requires admin role)
+
+security: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from login or OTP verify
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          nullable: true
+
+    ErrorEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message in Persian
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Full name
+        phone:
+          type: string
+          pattern: '^09\d{9}$'
+          description: Iranian mobile number
+        email:
+          type: string
+          format: email
+          nullable: true
+        role:
+          type: string
+          enum: [user, admin]
+        is_active:
+          type: integer
+          enum: [0, 1]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+
+    Address:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+        province:
+          type: string
+          description: Province name (استان)
+        city:
+          type: string
+        address:
+          type: string
+          description: Street address
+        postal_code:
+          type: string
+          pattern: '^\d{10}$'
+          description: 10-digit postal code
+        receiver:
+          type: string
+          description: Recipient name
+        phone:
+          type: string
+        is_default:
+          type: integer
+          enum: [0, 1]
+
+    AuthTokenData:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: JWT refresh token (OTP flow)
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Access token TTL in seconds
+        user:
+          $ref: '#/components/schemas/User'
+
+    OtpRequestData:
+      type: object
+      properties:
+        phone:
+          type: string
+          description: Masked phone number
+        purpose:
+          type: string
+          enum: [login, register, reset_password]
+        expires_in:
+          type: integer
+          example: 120
+        driver:
+          type: string
+          enum: [log, http]
+        debug_code:
+          type: string
+          description: Only in development with log driver
+
+    ShopSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        shop_name:
+          type: string
+        shop_slogan:
+          type: string
+        shop_logo:
+          type: string
+          description: Logo URL or path
+        shop_poster:
+          type: string
+          description: Poster URL or path
+        bank_card:
+          type: string
+          description: Bank card number for card-to-card
+        bank_owner:
+          type: string
+          description: Card holder name
+        payment_method:
+          type: string
+          enum: [card_to_card, zarinpal, both]
+        zarinpal_merchant_id:
+          type: string
+          nullable: true
+        sms_enabled:
+          type: integer
+          enum: [0, 1]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+          description: Price in Tomans
+        category_id:
+          type: integer
+        era:
+          type: string
+        material:
+          type: string
+        badge:
+          type: string
+        stock:
+          type: integer
+        featured:
+          type: integer
+          enum: [0, 1]
+        is_active:
+          type: integer
+          enum: [0, 1]
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImage'
+        options:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        image_url:
+          type: string
+        alt_text:
+          type: string
+        is_main:
+          type: integer
+          enum: [0, 1]
+        sort_order:
+          type: integer
+
+    ProductListData:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        last_page:
+          type: integer
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        poster_image:
+          type: string
+        image_count:
+          type: integer
+        main_image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryImage'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CategoryImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        category_id:
+          type: integer
+        image_url:
+          type: string
+        alt_text:
+          type: string
+        is_main:
+          type: integer
+          enum: [0, 1]
+        sort_order:
+          type: integer
+
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        subtotal:
+          type: integer
+        discount_amount:
+          type: integer
+        total:
+          type: integer
+        discount_code:
+          type: string
+          nullable: true
+
+    CartItem:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: integer
+        qty:
+          type: integer
+        image:
+          type: string
+        stock:
+          type: integer
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_number:
+          type: string
+          example: GB-A1B2C3
+        user_id:
+          type: integer
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+        customer_phone:
+          type: string
+        shipping_address:
+          type: string
+        total_amount:
+          type: integer
+        discount_code_id:
+          type: integer
+          nullable: true
+        payment_method:
+          type: string
+          enum: [card, transfer, cash]
+        status:
+          type: string
+          enum: [pending, paid, shipped, delivered, cancelled]
+        notes:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        receipt:
+          $ref: '#/components/schemas/PaymentReceipt'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: integer
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        price:
+          type: integer
+        product_image:
+          type: string
+
+    PaymentReceipt:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: integer
+        file_name:
+          type: string
+        file_path:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    OrderPaginated:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        last_page:
+          type: integer
+
+    Discount:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percent, fixed]
+        value:
+          type: number
+        valid_from:
+          type: string
+          format: date-time
+        valid_to:
+          type: string
+          format: date-time
+        is_active:
+          type: integer
+          enum: [0, 1]
+        created_at:
+          type: string
+          format: date-time
+
+    DiscountValidateData:
+      type: object
+      properties:
+        discount:
+          $ref: '#/components/schemas/Discount'
+        discount_amount:
+          type: integer
+        final_total:
+          type: integer
+
+    DashboardOverview:
+      type: object
+      properties:
+        stats:
+          type: object
+        recent_orders:
+          type: array
+          items:
+            type: object
+        low_stock:
+          type: array
+          items:
+            type: object
+        revenue_chart:
+          type: array
+          items:
+            type: object
+
+    # ─── Request Bodies ───────────────────────────────────────────
+
+    RegisterRequest:
+      type: object
+      required: [name, phone, password]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          pattern: '^09\d{9}$'
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [phone, password]
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+
+    OtpRequestBody:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          pattern: '^09\d{9}$'
+        purpose:
+          type: string
+          enum: [login, register, reset_password]
+          default: login
+
+    OtpVerifyRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+          pattern: '^\d{5}$'
+        purpose:
+          type: string
+          enum: [login, register, reset_password]
+          default: login
+        name:
+          type: string
+          description: Optional name for auto-registration
+
+    LogoutRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+
+    AddressCreateRequest:
+      type: object
+      required: [address, city]
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+          description: Province (maps to province in DB)
+        zip_code:
+          type: string
+          description: Postal code (maps to postal_code in DB)
+        title:
+          type: string
+        province:
+          type: string
+        postal_code:
+          type: string
+        receiver:
+          type: string
+        phone:
+          type: string
+        is_default:
+          type: integer
+          enum: [0, 1]
+
+    PlaceOrderRequest:
+      type: object
+      required: [customer_name, customer_phone, shipping_address, payment_method]
+      properties:
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+          format: email
+        customer_phone:
+          type: string
+        shipping_address:
+          type: string
+        payment_method:
+          type: string
+          enum: [card, transfer, cash]
+        discount_code:
+          type: string
+        notes:
+          type: string
+
+    UpdateOrderStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, paid, shipped, delivered, cancelled]
+
+    CartAddRequest:
+      type: object
+      required: [product_id]
+      properties:
+        product_id:
+          type: integer
+        qty:
+          type: integer
+          minimum: 1
+          default: 1
+
+    CartUpdateRequest:
+      type: object
+      required: [qty]
+      properties:
+        qty:
+          type: integer
+          minimum: 0
+
+    CartDiscountRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+
+    ProductCreateRequest:
+      type: object
+      required: [name, price, category_id, stock]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        category_id:
+          type: integer
+        era:
+          type: string
+        material:
+          type: string
+        badge:
+          type: string
+        stock:
+          type: integer
+        featured:
+          type: integer
+          enum: [0, 1]
+        is_active:
+          type: integer
+          enum: [0, 1]
+
+    CategoryCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        poster_image:
+          type: string
+
+    DiscountCreateRequest:
+      type: object
+      required: [code, type, value, valid_from, valid_to]
+      properties:
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percent, fixed]
+        value:
+          type: number
+        valid_from:
+          type: string
+          format: date-time
+        valid_to:
+          type: string
+          format: date-time
+        is_active:
+          type: integer
+          enum: [0, 1]
+
+    SettingsUpdateRequest:
+      type: object
+      properties:
+        shop_name:
+          type: string
+        shop_slogan:
+          type: string
+        shop_logo:
+          type: string
+        shop_poster:
+          type: string
+        bank_card:
+          type: string
+        bank_owner:
+          type: string
+        payment_method:
+          type: string
+          enum: [card_to_card, zarinpal, both]
+        zarinpal_merchant_id:
+          type: string
+          nullable: true
+        sms_enabled:
+          type: integer
+          enum: [0, 1]
+
+  responses:
+    Success200:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    nullable: true
+
+    Created201:
+      description: Resource created
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SuccessEnvelope'
+              - type: object
+                properties:
+                  data:
+                    nullable: true
+
+    BadRequest400:
+      description: Bad request or business logic error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    Unauthorized401:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    NotFound404:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    Validation422:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+    NoContent204:
+      description: Successful delete with no body
+
+paths:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # AUTH — Public
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      operationId: authRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokenData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: User login with password
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokenData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/admin-login:
+    post:
+      tags: [Auth]
+      summary: Admin login with password
+      operationId: authAdminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokenData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      summary: Request OTP code via SMS
+      operationId: authOtpRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpRequestBody'
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OtpRequestData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and issue JWT
+      operationId: authOtpVerify
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+      responses:
+        '200':
+          description: OTP verified, session created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokenData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      operationId: authMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      operationId: authRefresh
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthTokenData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout and revoke refresh token
+      operationId: authLogout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SETTINGS
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /settings:
+    get:
+      tags: [Settings]
+      summary: Get public shop settings
+      operationId: settingsPublic
+      responses:
+        '200':
+          description: Shop settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShopSettings'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PRODUCTS — Public
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /products:
+    get:
+      tags: [Products]
+      summary: List products with filters
+      operationId: productsList
+      parameters:
+        - name: category_id
+          in: query
+          schema: { type: integer }
+        - name: category
+          in: query
+          schema: { type: string }
+          description: Category slug
+        - name: era
+          in: query
+          schema: { type: string }
+        - name: featured
+          in: query
+          schema: { type: integer, enum: [0, 1] }
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Search query
+        - name: sort
+          in: query
+          schema: { type: string, default: newest }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 12 }
+      responses:
+        '200':
+          description: Paginated product list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductListData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /products/featured:
+    get:
+      tags: [Products]
+      summary: Get featured products
+      operationId: productsFeatured
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 8 }
+      responses:
+        '200':
+          description: Featured products
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      operationId: productsShow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CATEGORIES — Public
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all categories
+      operationId: categoriesList
+      responses:
+        '200':
+          description: Category list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by ID
+      operationId: categoriesShow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /categories/slug/{slug}:
+    get:
+      tags: [Categories]
+      summary: Get category by slug
+      operationId: categoriesBySlug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DISCOUNTS — Public
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /discounts/validate:
+    get:
+      tags: [Discounts]
+      summary: Validate discount code
+      operationId: discountsValidate
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema: { type: string }
+        - name: total
+          in: query
+          required: true
+          schema: { type: integer }
+          description: Cart total in Tomans
+      responses:
+        '200':
+          description: Discount validation result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DiscountValidateData'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # USERS — Authenticated
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      operationId: usersProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile with addresses
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    patch:
+      tags: [Users]
+      summary: Update user profile
+      operationId: usersUpdateProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /users/me/password:
+    put:
+      tags: [Users]
+      summary: Change password
+      operationId: usersChangePassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /users/me/addresses:
+    get:
+      tags: [Users]
+      summary: List user addresses
+      operationId: usersAddresses
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Address list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Address'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    post:
+      tags: [Users]
+      summary: Add address
+      operationId: usersAddAddress
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreateRequest'
+      responses:
+        '201':
+          description: Address created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Address'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /users/me/addresses/{id}:
+    patch:
+      tags: [Users]
+      summary: Update address
+      operationId: usersUpdateAddress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreateRequest'
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Address'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Users]
+      summary: Delete address
+      operationId: usersDeleteAddress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CART — Authenticated
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get cart contents
+      operationId: cartGet
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Cart'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Cart]
+      summary: Clear entire cart
+      operationId: cartClear
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /cart/items:
+    post:
+      tags: [Cart]
+      summary: Add item to cart
+      operationId: cartAddItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartAddRequest'
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Cart'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /cart/items/{productId}:
+    patch:
+      tags: [Cart]
+      summary: Update cart item quantity
+      operationId: cartUpdateItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartUpdateRequest'
+      responses:
+        '200':
+          description: Cart updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Cart'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Cart]
+      summary: Remove item from cart
+      operationId: cartRemoveItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Cart'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /cart/discount:
+    post:
+      tags: [Cart]
+      summary: Apply discount code to cart
+      operationId: cartApplyDiscount
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartDiscountRequest'
+      responses:
+        '200':
+          description: Discount applied
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ORDERS — Authenticated
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: List current user orders
+      operationId: ordersList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Order list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    post:
+      tags: [Orders]
+      summary: Place new order from cart
+      operationId: ordersPlace
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+      responses:
+        '201':
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order by ID
+      operationId: ordersShow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /orders/number/{number}:
+    get:
+      tags: [Orders]
+      summary: Get order by order number
+      operationId: ordersByNumber
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: number
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /orders/{id}/cancel:
+    patch:
+      tags: [Orders]
+      summary: Cancel order
+      operationId: ordersCancel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /orders/{id}/receipt:
+    post:
+      tags: [Orders]
+      summary: Upload payment receipt
+      operationId: ordersUploadReceipt
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [receipt]
+              properties:
+                receipt:
+                  type: string
+                  format: binary
+                  description: JPG, PNG, WebP or PDF (max 5MB)
+      responses:
+        '201':
+          description: Receipt uploaded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentReceipt'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ADMIN
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Dashboard overview
+      operationId: adminDashboardOverview
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DashboardOverview'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/stats:
+    get:
+      tags: [Admin]
+      summary: Dashboard statistics
+      operationId: adminDashboardStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/orders/recent:
+    get:
+      tags: [Admin]
+      summary: Recent orders
+      operationId: adminDashboardRecentOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10, maximum: 50 }
+      responses:
+        '200':
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/orders/by-status:
+    get:
+      tags: [Admin]
+      summary: Orders grouped by status
+      operationId: adminDashboardOrdersByStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Order status distribution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/products/low-stock:
+    get:
+      tags: [Admin]
+      summary: Low stock products
+      operationId: adminDashboardLowStock
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: threshold
+          in: query
+          schema: { type: integer, default: 5 }
+      responses:
+        '200':
+          description: Low stock list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/products/top:
+    get:
+      tags: [Admin]
+      summary: Top selling products
+      operationId: adminDashboardTopProducts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10, maximum: 50 }
+      responses:
+        '200':
+          description: Top products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/dashboard/revenue:
+    get:
+      tags: [Admin]
+      summary: Daily revenue chart
+      operationId: adminDashboardRevenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, default: 7 }
+      responses:
+        '200':
+          description: Revenue by day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users
+      operationId: adminUsersList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/users/{id}/activate:
+    patch:
+      tags: [Admin]
+      summary: Activate user
+      operationId: adminUsersActivate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: User activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/users/{id}/deactivate:
+    patch:
+      tags: [Admin]
+      summary: Deactivate user
+      operationId: adminUsersDeactivate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: User deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/products:
+    post:
+      tags: [Admin]
+      summary: Create product
+      operationId: adminProductsCreate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/products/{id}:
+    put:
+      tags: [Admin]
+      summary: Update product
+      operationId: adminProductsUpdate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Admin]
+      summary: Delete product
+      operationId: adminProductsDelete
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/products/{id}/toggle:
+    patch:
+      tags: [Admin]
+      summary: Toggle product active status
+      operationId: adminProductsToggle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Product toggled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/products/{id}/images:
+    post:
+      tags: [Admin]
+      summary: Upload product image
+      operationId: adminProductsAddImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                alt_text:
+                  type: string
+                is_main:
+                  type: integer
+                  enum: [0, 1]
+                sort_order:
+                  type: integer
+      responses:
+        '201':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductImage'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/products/{id}/images/{imageId}:
+    patch:
+      tags: [Admin]
+      summary: Set main product image
+      operationId: adminProductsSetMainImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: imageId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Main image set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Admin]
+      summary: Delete product image
+      operationId: adminProductsDeleteImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: imageId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/categories:
+    post:
+      tags: [Admin]
+      summary: Create category
+      operationId: adminCategoriesCreate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/categories/{id}:
+    put:
+      tags: [Admin]
+      summary: Update category
+      operationId: adminCategoriesUpdate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Admin]
+      summary: Delete category
+      operationId: adminCategoriesDelete
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/categories/{id}/poster:
+    post:
+      tags: [Admin]
+      summary: Upload category poster
+      operationId: adminCategoriesUploadPoster
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [poster]
+              properties:
+                poster:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Poster uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/categories/{id}/images:
+    get:
+      tags: [Admin]
+      summary: List category images
+      operationId: adminCategoriesImages
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Image list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryImage'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    post:
+      tags: [Admin]
+      summary: Upload category image
+      operationId: adminCategoriesAddImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                alt_text:
+                  type: string
+                is_main:
+                  type: integer
+                  enum: [0, 1]
+                sort_order:
+                  type: integer
+      responses:
+        '201':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryImage'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/categories/{id}/images/{imageId}:
+    patch:
+      tags: [Admin]
+      summary: Set main category image
+      operationId: adminCategoriesSetMainImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: imageId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Main image set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Admin]
+      summary: Delete category image
+      operationId: adminCategoriesDeleteImage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: imageId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/orders:
+    get:
+      tags: [Admin]
+      summary: List all orders (paginated)
+      operationId: adminOrdersList
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, paid, shipped, delivered, cancelled]
+      responses:
+        '200':
+          description: Paginated orders
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderPaginated'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/orders/{id}/status:
+    patch:
+      tags: [Admin]
+      summary: Update order status
+      operationId: adminOrdersUpdateStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/settings:
+    get:
+      tags: [Admin]
+      summary: Get shop settings (admin)
+      operationId: adminSettingsGet
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Shop settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShopSettings'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    patch:
+      tags: [Admin]
+      summary: Update shop settings (partial)
+      operationId: adminSettingsUpdate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdateRequest'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShopSettings'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/discounts:
+    get:
+      tags: [Admin]
+      summary: List all discount codes
+      operationId: adminDiscountsList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Discount list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Discount'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    post:
+      tags: [Admin]
+      summary: Create discount code
+      operationId: adminDiscountsCreate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountCreateRequest'
+      responses:
+        '201':
+          description: Discount created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Discount'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/discounts/active:
+    get:
+      tags: [Admin]
+      summary: List active discount codes
+      operationId: adminDiscountsActive
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active discounts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Discount'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/discounts/{id}:
+    put:
+      tags: [Admin]
+      summary: Update discount code
+      operationId: adminDiscountsUpdate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscountCreateRequest'
+      responses:
+        '200':
+          description: Discount updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Discount'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+    delete:
+      tags: [Admin]
+      summary: Delete discount code
+      operationId: adminDiscountsDelete
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { $ref: '#/components/responses/NoContent204' }
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
+
+  /admin/discounts/{id}/deactivate:
+    patch:
+      tags: [Admin]
+      summary: Deactivate discount code
+      operationId: adminDiscountsDeactivate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Discount deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest400' }
+        '401': { $ref: '#/components/responses/Unauthorized401' }
+        '404': { $ref: '#/components/responses/NotFound404' }
+        '422': { $ref: '#/components/responses/Validation422' }
