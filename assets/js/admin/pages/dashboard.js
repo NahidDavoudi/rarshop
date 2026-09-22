@@ -61,12 +61,20 @@
     container.innerHTML = '';
 
     const data = (rawData && rawData.length)
-      ? rawData
+      ? rawData.map(d => ({
+          date: d.date,
+          amount: +(d.amount ?? d.revenue ?? 0)
+        }))
       : Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - 6 + i);
           return { date: (d.getMonth() + 1) + '/' + d.getDate(), amount: 0 };
         });
+
+    // safety: prevent NaN in D3 calculations
+    if (data.some(d => Number.isNaN(+d.amount))) {
+      data.forEach(d => { if (Number.isNaN(+d.amount)) d.amount = 0; });
+    }
 
     if (data.every(d => +d.amount === 0)) {
       const { muted } = _theme();
@@ -86,7 +94,9 @@
     const h = H - margin.top  - margin.bottom;
 
     const svg = d3.select(container).append('svg')
-      .attr('width', W).attr('height', H).style('overflow', 'visible');
+      .attr('width', '100%').attr('height', '100%')
+      .attr('viewBox', `0 0 ${W} ${H}`)
+      .style('overflow', 'visible');
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
