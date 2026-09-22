@@ -111,7 +111,7 @@ const VariantTable = {
 
     return `
       <!-- Desktop table -->
-      <div class="hidden md:block border border-border rounded-xl overflow-hidden bg-body">
+      <div data-variant-view="desktop" class="hidden md:block border border-border rounded-xl overflow-hidden bg-body">
         <div class="overflow-x-auto">
           <table class="w-full text-right min-w-[640px]">
             <thead>
@@ -128,7 +128,7 @@ const VariantTable = {
         </div>
       </div>
       <!-- Mobile cards -->
-      <div class="md:hidden grid grid-cols-1 gap-3">${mobileCards(list)}</div>
+      <div data-variant-view="mobile" class="md:hidden grid grid-cols-1 gap-3">${mobileCards(list)}</div>
       ${inactiveBar}`;
   },
 
@@ -138,7 +138,15 @@ const VariantTable = {
 
   collectRows(container) {
     const rows = container?.querySelectorAll('[data-variant-id]') || [];
-    return Array.from(rows).map((row) => {
+    const desktop = window.matchMedia?.('(min-width: 768px)').matches;
+    const selected = new Map();
+    Array.from(rows).forEach((row) => {
+      if (row.dataset.active !== '1') return;
+      const view = row.closest('[data-variant-view]')?.dataset.variantView;
+      if (view && view !== (desktop ? 'desktop' : 'mobile')) return;
+      if (!selected.has(row.dataset.variantId)) selected.set(row.dataset.variantId, row);
+    });
+    return Array.from(selected.values()).map((row) => {
       const id = Number(row.dataset.variantId);
       const sku = row.querySelector('[data-field="sku"]')?.value?.trim() || '';
       const price = parsePrice(row.querySelector('[data-field="price"]')?.value);

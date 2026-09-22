@@ -52,6 +52,11 @@
 div[data-page] { display: none; }
 div[data-page].active { display: block; }
 
+/* Keep the committed CSS usable when Tailwind is not rebuilt on deploy. */
+@media (min-width: 48rem) {
+  .md\:block { display: block; }
+}
+
 /* ── Accent Button (primary CTA — red on dark theme) ── */
 .btn-accent {
   position: relative;
