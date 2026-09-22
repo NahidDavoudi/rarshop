@@ -121,7 +121,7 @@ function renderAxesSection(axes, variants, t) {
 }
 
 const VariantsTab = {
-  render({ axes = [], variants = [], t = {} } = {}) {
+  renderAxesPreview({ axes = [], variants = [], t = {} } = {}) {
     const active = (axes || []).filter((a) => Number(a.is_active ?? 1) === 1);
     return `
       <div id="productTabVariants" class="space-y-6">
@@ -145,52 +145,47 @@ const VariantsTab = {
             </button>
           </div>
         </section>
-        <section aria-labelledby="variants-heading" class="bg-body border border-border rounded-2xl p-4 md:p-5">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h4 id="variants-heading" class="text-sm font-bold text-body flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-muted shrink-0">۳</span> واریانت‌ها</h4>
-            <div class="flex flex-wrap items-center gap-2">
-              <label class="sr-only" for="variantFilterValue">فیلتر مقدار</label>
-              <select id="variantFilterValue" class="min-h-[40px] bg-surface border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
-                <option value="">همه مقادیر</option>
-              </select>
-              <button type="button" id="btnToggleInactive" class="inline-flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-muted hover:text-body hover:bg-card cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i> نمایش غیرفعال‌ها</button>
-            </div>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 mb-4">
-            <label class="flex-1 min-w-0 space-y-1">
-              <span class="block text-xs font-medium text-muted">قیمت همه</span>
-              <input type="text" id="bulkPrice" inputmode="numeric" placeholder="تومان"
-                     class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
-            </label>
-            <label class="w-full sm:w-40 shrink-0 space-y-1">
-              <span class="block text-xs font-medium text-muted">موجودی همه</span>
-              <input type="number" id="bulkQty" min="0" placeholder="۰"
-                     class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
-            </label>
-            <div class="flex items-end">
-              <button type="button" id="btnBulkApply" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-surface border border-border hover:bg-card text-sm font-medium text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">اعمال گروهی</button>
-            </div>
-          </div>
-          <div id="variantTableWrap">${VariantTable.render({ variants, t })}</div>
-        </section>
       </div>`;
   },
 
-  _state: { showInactive: false, filterValueId: null },
-
-  updateTable(container, variants, t, opts = {}) {
-    const wrap = container.querySelector('#variantTableWrap');
-    if (wrap) {
-      wrap.innerHTML = VariantTable.render({
-        variants,
-        t,
-        showInactive: opts.showInactive ?? this._state.showInactive,
-        filterValueId: opts.filterValueId ?? this._state.filterValueId,
-      });
-      VariantTable.bindPriceInputs(wrap);
-      this._bindTableActions(container, t);
-    }
+  renderVariantSection({ variants = [], t = {} } = {}) {
+    return `
+      <section aria-labelledby="variants-heading" class="bg-body border border-border rounded-2xl p-4 md:p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h4 id="variants-heading" class="text-sm font-bold text-body flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-xs font-bold text-muted shrink-0">۳</span> واریانت‌ها</h4>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="sr-only" for="variantFilterValue">فیلتر مقدار</label>
+            <select id="variantFilterValue" class="min-h-[40px] bg-surface border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
+              <option value="">همه مقادیر</option>
+            </select>
+            <button type="button" id="btnToggleInactive" class="inline-flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-muted hover:text-body hover:bg-card cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i> نمایش غیرفعال‌ها</button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+          <label class="flex-1 min-w-0 space-y-1">
+            <span class="block text-xs font-medium text-muted">قیمت همه</span>
+            <input type="text" id="bulkPrice" inputmode="numeric" placeholder="تومان"
+                   class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+          </label>
+          <label class="w-full sm:w-40 shrink-0 space-y-1">
+            <span class="block text-xs font-medium text-muted">موجودی همه</span>
+            <input type="number" id="bulkQty" min="0" placeholder="۰"
+                   class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
+          </label>
+          <div class="flex items-end">
+            <button type="button" id="btnBulkApply" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-surface border border-border hover:bg-card text-sm font-medium text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">اعمال گروهی</button>
+          </div>
+        </div>
+        <div id="variantTableWrap">${VariantTable.render({ variants, t })}</div>
+      </section>`;
   },
+
+  render({ axes = [], variants = [], t = {} } = {}) {
+    return this.renderAxesPreview({ axes, variants, t })
+      + this.renderVariantSection({ variants, t });
+  },
+
+  _state: { showInactive: false, filterValueId: null },
 
   _bindTableActions(container, t) {
     const wrap = container.querySelector('#variantTableWrap');
@@ -332,7 +327,8 @@ const VariantsTab = {
       setAddValueError(axisId, '');
       try {
         window.setLoading?.(true);
-        for (const part of parts) await api().createAxisValue(productId, axisId, { value: part });
+        const hexInp = container.querySelector(`[data-add-hex="${axisId}"]`);
+        for (const part of parts) await api().createAxisValue(productId, axisId, { value: part, swatch_hex: hexInp?.value || null });
         await reload();
         window.toast?.(`${parts.length.toLocaleString('fa-IR')} مقدار اضافه شد`);
       } catch (err) {
@@ -571,7 +567,7 @@ const VariantsTab = {
           container.dataset.variants = JSON.stringify(list);
           this.updateTable(container, list, t);
           window.toast?.('واریانت‌ها اعمال شدند');
-          onChanged?.(null);
+          await onChanged?.(null);
         } catch (err) { window.toast?.(err.message, 'error'); }
         finally { window.setLoading?.(false); }
         return;
