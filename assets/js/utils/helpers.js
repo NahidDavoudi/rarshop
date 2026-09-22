@@ -179,9 +179,10 @@ export function installAdminHelpers() {
 
     modal.querySelector('#confirmModalTitle').textContent = title;
     modal.querySelector('#confirmModalMessage').textContent = message;
-    const iconEl = modal.querySelector('#confirmModalIcon i');
-    iconEl.className = `w-6 h-6 ${iconColor}`;
-    modal.querySelector('#confirmModalIcon').className = `w-12 h-12 rounded-full ${iconBg} flex items-center justify-center mx-auto mb-4`;
+    const iconEl = modal.querySelector('#confirmModalIconSvg');
+    if (iconEl) iconEl.setAttribute('class', `w-6 h-6 ${iconColor}`);
+    const iconWrap = modal.querySelector('#confirmModalIcon');
+    if (iconWrap) iconWrap.setAttribute('class', `w-12 h-12 rounded-full ${iconBg} flex items-center justify-center mx-auto mb-4`);
     const confirmBtn = modal.querySelector('[data-confirm-btn]');
     const cancelBtn = modal.querySelector('[data-cancel-btn]');
     if (confirmBtn) {

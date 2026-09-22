@@ -17,7 +17,7 @@ function renderAxisCard(axis, idx, total, t) {
   const vals = axisValues(axis);
   const chips = vals.map((v) => `
     <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-border bg-surface text-sm whitespace-nowrap shrink-0 max-w-full">
-      ${swatch ? `<input type="color" data-value-picker="${v.id}" value="${escapeAttr(v.swatch_hex || '#000000')}" class="w-6 h-6 rounded-full border border-border cursor-pointer shrink-0" title="رنگ">` : ''}
+      ${swatch ? `<input type="color" data-value-picker="${v.id}" data-axis-id="${axis.id}" value="${escapeAttr(v.swatch_hex || '#000000')}" class="w-6 h-6 rounded-full border border-border cursor-pointer shrink-0" title="رنگ">` : ''}
       ${swatch && v.swatch_hex ? `<span class="w-3.5 h-3.5 rounded-full border border-border shrink-0" style="background:${escapeAttr(v.swatch_hex)}" aria-hidden="true"></span>` : ''}
       <span class="truncate min-w-0">${escapeHtml(v.value)}</span>
       <button type="button" data-del-value="${v.id}" data-axis-id="${axis.id}" aria-label="حذف ${escapeAttr(v.value)}"
@@ -187,7 +187,7 @@ const VariantsTab = {
 
   _state: { showInactive: false, filterValueId: null },
 
-  _bindTableActions(container, t) {
+  _bindTableActions(container, t, signal = container._variantTabAbortController?.signal) {
     const wrap = container.querySelector('#variantTableWrap');
     if (!wrap || wrap.dataset.bound) return;
     wrap.dataset.bound = '1';
@@ -205,7 +205,8 @@ const VariantsTab = {
         const vid = Number(tg.dataset.variantId);
         try {
           window.setLoading?.(true);
-          await window.API.products.updateVariant(vid, { is_active: tg.closest('tr')?.dataset.active === '1' ? 0 : 1 });
+          const row = tg.closest('[data-variant-id]');
+          await window.API.products.updateVariant(vid, { is_active: row?.dataset.active === '1' ? 0 : 1 });
           await this._reloadProduct(container, t);
         } catch (err) {
           window.toast?.(err.message, 'error');
@@ -213,7 +214,7 @@ const VariantsTab = {
           window.setLoading?.(false);
         }
       }
-    });
+    }, { signal });
   },
 
   async _reloadProduct(container, t) {
@@ -251,7 +252,11 @@ const VariantsTab = {
   },
 
   bind(container, { productId, t = {}, onChanged = null } = {}) {
-    if (!container || container.dataset.vtabBound) return;
+    if (!container) return;
+    container._variantTabAbortController?.abort();
+    const abortController = new AbortController();
+    container._variantTabAbortController = abortController;
+    const { signal } = abortController;
     container.dataset.vtabBound = '1';
     container.dataset.productId = productId || '';
     this._state = { showInactive: false, filterValueId: null };
@@ -313,7 +318,7 @@ const VariantsTab = {
         setAddValueError(axisId, m); window.toast?.(m, 'error');
       }
       finally { window.setLoading?.(false); }
-    });
+    }, { signal });
 
     container.addEventListener('paste', async (e) => {
       const inp = e.target.closest?.('[data-add-value]');
@@ -336,14 +341,15 @@ const VariantsTab = {
         setAddValueError(axisId, m); window.toast?.(m, 'error');
       }
       finally { window.setLoading?.(false); }
-    });
+    }, { signal });
 
     /* swatch picker on existing chip */
     container.addEventListener('change', async (e) => {
       const picker = e.target.closest?.('[data-value-picker]');
       if (picker) {
         const vid = Number(picker.dataset.valuePicker);
-        try { await api().updateAxisValue(productId, 0, vid, { swatch_hex: picker.value }); await reload(); }
+        const axisId = Number(picker.dataset.axisId);
+        try { await api().updateAxisValue(productId, axisId, vid, { swatch_hex: picker.value }); await reload(); }
         catch (err) { window.toast?.(err.message, 'error'); }
         return;
       }
@@ -363,7 +369,7 @@ const VariantsTab = {
         this._state.filterValueId = filt.value ? Number(filt.value) : null;
         this._refreshTable(container, t);
       }
-    });
+    }, { signal });
 
     /* axis name save on blur — inline error */
     container.addEventListener('focusout', async (e) => {
@@ -391,7 +397,7 @@ const VariantsTab = {
         nameInp.setAttribute('aria-invalid', 'true');
         window.toast?.(m, 'error');
       }
-    });
+    }, { signal });
 
     container.addEventListener('click', async (e) => {
       const preset = e.target.closest?.('[data-preset]');
@@ -575,7 +581,8 @@ const VariantsTab = {
 
       if (e.target.closest?.('#btnToggleInactive')) {
         this._state.showInactive = !this._state.showInactive;
-        e.target.textContent = this._state.showInactive ? 'پنهان‌کردن غیرفعال‌ها' : 'نمایش غیرفعال‌ها';
+        const toggleBtn = e.target.closest('#btnToggleInactive');
+        if (toggleBtn) toggleBtn.textContent = this._state.showInactive ? 'پنهان‌کردن غیرفعال‌ها' : 'نمایش غیرفعال‌ها';
         this._refreshTable(container, t);
         return;
       }
@@ -600,7 +607,7 @@ const VariantsTab = {
         } catch (err) { window.toast?.(err.message, 'error'); }
         finally { window.setLoading?.(false); }
       }
-    });
+    }, { signal });
 
     this._bindTableActions(container, t);
     this._fillFilterOptions(container);

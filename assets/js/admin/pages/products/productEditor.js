@@ -156,6 +156,8 @@ function _renderFullPage() {
     });
   }
   if (shell && !locked) {
+    shell.dataset.axes = JSON.stringify(_currentProduct?.variant_axes || []);
+    shell.dataset.variants = JSON.stringify(_currentProduct?.variants || []);
     VariantsTab.bind(shell, { productId: _editingProdId, t, onChanged: async () => {
       const raw = await window.API.products.get(_editingProdId);
       _currentProduct = raw?.data || raw;
