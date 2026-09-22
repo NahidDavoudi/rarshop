@@ -568,12 +568,9 @@ const VariantsTab = {
         }
         try {
           window.setLoading?.(true);
-          const res = await api().generateVariants(productId, this._collectAxesInput(container));
-          const list = res?.data || res || [];
-          container.dataset.variants = JSON.stringify(list);
-          this.updateTable(container, list, t);
+          await api().generateVariants(productId, this._collectAxesInput(container));
+          await reload();
           window.toast?.('واریانت‌ها اعمال شدند');
-          await onChanged?.(null);
         } catch (err) { window.toast?.(err.message, 'error'); }
         finally { window.setLoading?.(false); }
         return;
