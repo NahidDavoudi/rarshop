@@ -4,6 +4,7 @@
 import api from '../core/api.js';
 import Router from '../core/router.js';
 import ProductCard from '../components/ProductCard.js';
+import CategoryCard from '../components/CategoryCard.js';
 import HeroSection from '../components/HeroSection.js';
 import FeaturedCarousel from '../components/FeaturedCarousel.js';
 import PromoPosterSlider from '../components/PromoPosterSlider.js';
@@ -35,13 +36,32 @@ function bindProductCards(container) {
   });
 }
 
+async function loadCategories() {
+  const grid = document.getElementById('categories-grid');
+  if (!grid) return;
+
+  try {
+    const cats = await api.categories.list();
+    if (cats.length) {
+      grid.innerHTML = cats.map((c) => CategoryCard.render(c)).join('');
+    } else {
+      grid.innerHTML = '';
+    }
+  } catch (e) {
+    console.warn('Categories error:', e);
+    grid.innerHTML = '';
+  }
+}
+
 function setHomeTexts() {
   const { home, newsletter } = storeConfig.texts;
+  const categoriesTitle = document.getElementById('categories-title');
   const newestTitle = document.getElementById('newest-title');
   const newestAll = document.getElementById('newest-all');
   const nlTitle = document.getElementById('newsletter-title');
   const nlSub = document.getElementById('newsletter-subtitle');
 
+  if (categoriesTitle) categoriesTitle.textContent = home.categories;
   if (newestTitle) newestTitle.textContent = home.newest;
   if (newestAll) newestAll.querySelector('span').textContent = home.viewAll;
   if (nlTitle) nlTitle.textContent = newsletter.title;
@@ -125,6 +145,8 @@ Router.onEnter('home', async function () {
       featuredEl.innerHTML = '';
     }
   }
+
+  await loadCategories();
 
   await loadPromoPosters();
 

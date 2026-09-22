@@ -134,6 +134,20 @@
       <!-- محبوب‌ترین‌ها — توسط FeaturedCarousel پر می‌شود -->
       <div id="featured-section"></div>
 
+      <!-- دسته‌بندی‌ها — توسط CategoryCard در home.js پر می‌شود -->
+      <section id="categories-section" class="py-14 md:py-20 bg-body">
+        <div class="max-w-[1280px] mx-auto">
+          <div class="flex items-center justify-between mb-8 px-4 md:px-6">
+            <h2 id="categories-title" class="text-2xl md:text-4xl font-bold text-body text-right">دسته‌بندی‌ها</h2>
+            <a href="#/categories" data-link
+              class="text-muted text-xs md:text-sm hover:text-body flex flex-row-reverse items-center gap-1 transition-colors shrink-0">
+              <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i><span>همه</span>
+            </a>
+          </div>
+          <div id="categories-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4 md:px-6"></div>
+        </div>
+      </section>
+
       <!-- پوسترهای تبلیغاتی — توسط PromoPosterSlider پر می‌شود -->
       <div id="promo-posters-section"></div>
 

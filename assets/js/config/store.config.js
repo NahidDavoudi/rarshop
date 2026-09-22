@@ -389,6 +389,8 @@ export default {
 
       featured: 'محبوب‌ترین‌ها',
 
+      categories: 'دسته‌بندی‌ها',
+
       newest: 'جدیدترین محصولات',
 
       viewAll: 'همه',
