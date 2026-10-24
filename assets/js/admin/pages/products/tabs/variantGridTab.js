@@ -66,48 +66,64 @@ function fromProduct(product) {
 }
 
 /* ───────────── HTML ───────────── */
-const TH = 'border border-border bg-surface px-2 py-2 text-xs font-medium text-muted text-right align-middle whitespace-nowrap';
+const TH = 'border border-border bg-surface px-1 py-1.5 sm:px-2 sm:py-2 text-xs font-medium text-muted text-right align-middle';
 const TD = 'border border-border p-0 align-middle bg-body';
-const CELL = 'class="w-full min-w-[110px] bg-transparent px-3 py-2.5 text-sm text-body placeholder:text-dim outline-none focus:bg-accent/5 focus:ring-2 focus:ring-inset focus:ring-accent"';
-const ICON_BTN = 'w-7 h-7 inline-flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-accent/10 cursor-pointer transition-colors';
+const CELL = 'class="w-[var(--w,100%)] sm:w-full min-w-0 sm:min-w-[110px] bg-transparent px-1.5 py-2 sm:px-3 sm:py-2.5 text-sm text-body placeholder:text-dim outline-none focus:bg-accent/5 focus:ring-2 focus:ring-inset focus:ring-accent"';
+const ICON_BTN = 'w-6 h-6 sm:w-7 sm:h-7 inline-flex items-center justify-center rounded-md sm:rounded-lg text-muted hover:text-accent hover:bg-accent/10 cursor-pointer transition-colors';
+const COL_LIMITS = { axis: [5, 14], sku: [5, 10], price: [8, 12], quantity: [3, 6] };
 
 function headHtml(st) {
   const nAx = st.axes.length;
+
   const axisTh = st.axes.map((a, ci) => `
-    <th class="${TH}">
-      <div class="flex items-center gap-1">
-        <input type="text" data-axis-name="${ci}" value="${escapeAttr(a.name)}" placeholder="نام ستون (مثلاً رنگ)"
+    <th class="${TH} w-[1%] sm:w-auto">
+      <div class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center">
+        <input type="text" data-axis-name="${ci}" value="${escapeAttr(a.name)}" placeholder="نام ستون"
                aria-label="نام ستون ${ci + 1}"
-               class="flex-1 min-w-[90px] bg-transparent text-xs font-bold text-body placeholder:text-dim placeholder:font-normal outline-none focus:ring-1 focus:ring-accent rounded px-1 py-1">
-        <select data-axis-type="${ci}" aria-label="نوع ستون"
-                class="text-[11px] bg-transparent text-muted outline-none cursor-pointer">
-          <option value="text" ${a.input_type === 'swatch' ? '' : 'selected'}>متن</option>
-          <option value="swatch" ${a.input_type === 'swatch' ? 'selected' : ''}>رنگ</option>
-        </select>
-        <button type="button" data-del-axis="${ci}" title="حذف ستون" aria-label="حذف ستون" class="${ICON_BTN}">×</button>
+               class="w-full sm:flex-1 min-w-[56px] sm:min-w-[90px] bg-transparent text-xs font-bold text-body placeholder:text-dim placeholder:font-normal outline-none focus:ring-1 focus:ring-accent rounded px-1 py-0.5">
+        <div class="flex items-center justify-between gap-0.5 sm:contents">
+          <select data-axis-type="${ci}" aria-label="نوع ستون"
+                  class="w-[46px] sm:w-auto text-[10px] sm:text-[11px] bg-transparent text-muted outline-none cursor-pointer border border-border rounded px-0.5 sm:px-1 py-0.5">
+            <option value="text" ${a.input_type === 'swatch' ? '' : 'selected'}>متن</option>
+            <option value="swatch" ${a.input_type === 'swatch' ? 'selected' : ''}>رنگ</option>
+          </select>
+          <button type="button" data-del-axis="${ci}" title="حذف ستون" aria-label="حذف ستون"
+                  class="shrink-0 ${ICON_BTN}">×</button>
+        </div>
       </div>
     </th>`).join('');
 
+  // در موبایل دکمه‌ی افزودن ستون پایین جدول است، نه توی هدر
   const addAxis = nAx < MAX_AXES
-    ? `<th class="${TH}"><button type="button" data-add-axis class="px-2 py-1 rounded-lg border border-dashed border-border text-muted hover:text-body hover:border-accent cursor-pointer">＋ ستون پارامتر</button></th>`
+    ? `<th class="${TH} hidden sm:table-cell">
+         <button type="button" data-add-axis
+           class="px-1.5 py-1 rounded-lg border border-dashed border-border text-muted hover:text-body hover:border-accent cursor-pointer whitespace-nowrap text-xs">
+           ＋ ستون پارامتر
+         </button>
+       </th>`
     : '';
 
-  const fill = (f) => `<button type="button" data-fill="${f}" title="مقدار سطر اول را برای همه کپی کن" class="ms-1 text-[11px] text-dim hover:text-accent cursor-pointer">↓ همه</button>`;
+  const fill = (f) =>
+    `<button type="button" data-fill="${f}" title="مقدار سطر اول را برای همه کپی کن"
+       class="ms-0.5 sm:ms-1 text-[10px] sm:text-[11px] text-dim hover:text-accent cursor-pointer">
+       <span class="hidden sm:inline">↓ همه</span><span class="sm:hidden">↓</span>
+     </button>`;
 
   return `
     <tr>
-      <th class="${TH} w-10 text-center">#</th>
+      <th class="${TH} w-8 sm:w-10 text-center">#</th>
       ${axisTh}
       ${addAxis}
       <th class="${TH}">SKU</th>
-      <th class="${TH}">قیمت (تومان)${fill('price')}</th>
+      <th class="${TH}">قیمت<span class="hidden sm:inline"> (تومان)</span>${fill('price')}</th>
       <th class="${TH}">موجودی${fill('quantity')}</th>
-      <th class="${TH} w-20"></th>
+      <th class="${TH} w-14 sm:w-20"></th>
     </tr>`;
 }
 
 function rowHtml(st, r, i) {
   const nAx = st.axes.length;
+
   const cells = r.cells.map((c, ci) => {
     const ax = st.axes[ci];
     const swatch = ax.input_type === 'swatch';
@@ -115,7 +131,7 @@ function rowHtml(st, r, i) {
       <td class="${TD}">
         <div class="flex items-center">
           ${swatch ? `<input type="color" data-hex="${i}:${ci}" value="${escapeAttr(c.hex || '#cccccc')}" title="رنگ"
-                class="w-7 h-7 ms-2 rounded border border-border cursor-pointer shrink-0 ${c.hex ? '' : 'opacity-50'}">` : ''}
+                class="w-5 h-5 sm:w-7 sm:h-7 ms-1 sm:ms-2 rounded border border-border cursor-pointer shrink-0 ${c.hex ? '' : 'opacity-50'}">` : ''}
           <input type="text" ${CELL} data-nav="${i}:${ci}" data-cell="${i}:${ci}" list="vg-dl-${ci}"
                  value="${escapeAttr(c.value)}" placeholder="${escapeAttr(ax.name || 'مقدار')}" autocomplete="off">
         </div>
@@ -124,16 +140,17 @@ function rowHtml(st, r, i) {
 
   return `
     <tr data-row="${i}" ${r.id ? `data-variant-id="${r.id}"` : ''}>
-      <td class="${TD} text-center text-xs text-dim w-10 select-none">${faNum(i + 1)}</td>
+      <td class="${TD} text-center text-xs text-dim w-8 sm:w-10 select-none">${faNum(i + 1)}</td>
       ${cells}
-      ${nAx < MAX_AXES ? `<td class="${TD} bg-surface/40"></td>` : ''}
+      ${nAx < MAX_AXES ? `<td class="${TD} bg-surface/40 hidden sm:table-cell"></td>` : ''}
       <td class="${TD}"><input type="text" ${CELL} dir="ltr" data-nav="${i}:${nAx}" data-field="sku" value="${escapeAttr(r.sku)}" placeholder="خودکار"></td>
       <td class="${TD}"><input type="text" ${CELL} data-nav="${i}:${nAx + 1}" data-field="price" inputmode="numeric" value="${escapeAttr(r.price)}" placeholder="—"></td>
       <td class="${TD}"><input type="number" ${CELL} data-nav="${i}:${nAx + 2}" data-field="quantity" min="0" value="${Number(r.quantity) || 0}"></td>
       <td class="${TD} text-center whitespace-nowrap">
         <button type="button" data-dup-row="${i}" title="کپی سطر" aria-label="کپی سطر" class="${ICON_BTN}">⧉</button>
         <button type="button" data-del-row="${i}" title="حذف سطر" aria-label="حذف سطر" class="${ICON_BTN}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash preview-icon"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>        </button>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
       </td>
     </tr>`;
 }
@@ -156,13 +173,13 @@ function shellHtml(st) {
         </p>
         <div class="flex items-center gap-2 shrink-0">
           <span id="vgDirty" class="text-xs text-amber-600 hidden">ذخیره‌نشده</span>
-          <button type="button" data-reset class="min-h-[40px] px-4 rounded-xl border border-border bg-surface text-sm text-muted hover:text-body cursor-pointer">بازگردانی</button>
-          <button type="button" data-save class="min-h-[40px] px-5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-medium cursor-pointer">ذخیره واریانت‌ها</button>
+          <button type="button" data-reset class="min-h-[40px] px-3 sm:px-4 rounded-xl border border-border bg-surface text-xs sm:text-sm text-muted hover:text-body cursor-pointer whitespace-nowrap">بازگردانی</button>
+          <button type="button" data-save class="min-h-[40px] px-4 sm:px-5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"><span class="hidden sm:inline">ذخیره واریانت‌ها</span><span class="sm:hidden">ذخیره</span></button>
         </div>
       </div>
 
       <div class="overflow-x-auto rounded-xl border border-border">
-        <table class="w-full text-right border-collapse min-w-[560px]" dir="rtl">
+        <table class="w-max sm:w-full text-right border-collapse sm:min-w-[560px]" dir="rtl">
           <thead id="vgHead">${headHtml(st)}</thead>
           <tbody id="vgBody">${st.rows.map((r, i) => rowHtml(st, r, i)).join('')}</tbody>
         </table>
@@ -170,8 +187,12 @@ function shellHtml(st) {
       ${datalistsHtml(st)}
 
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <button type="button" data-add-row ${canAdd ? '' : 'disabled'}
-                class="min-h-[40px] px-4 rounded-xl border border-dashed border-border text-sm text-muted hover:text-body hover:border-accent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">＋ سطر جدید</button>
+        <div class="flex items-center gap-2">
+          <button type="button" data-add-row ${canAdd ? '' : 'disabled'}
+                  class="min-h-[40px] px-4 rounded-xl border border-dashed border-border text-sm text-muted hover:text-body hover:border-accent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">＋ سطر جدید</button>
+          ${st.axes.length < MAX_AXES ? `<button type="button" data-add-axis
+                  class="sm:hidden min-h-[40px] px-3 rounded-xl border border-dashed border-border text-sm text-muted hover:text-body hover:border-accent cursor-pointer">＋ ستون</button>` : ''}
+        </div>
         <p id="vgSummary" class="text-xs text-muted"></p>
       </div>
       <div id="vgErrors" class="hidden rounded-xl border border-accent/30 bg-accent/5 p-3 text-xs text-accent leading-6" role="alert"></div>
@@ -214,6 +235,31 @@ function refreshDup() {
   }
 }
 
+function applyWidths() {
+  if (!cur) return;
+  const st = S();
+  const nAx = st.axes.length;
+  const lens = new Array(nAx + 3).fill(0);
+
+  st.rows.forEach((r) => {
+    r.cells.forEach((c, ci) => { lens[ci] = Math.max(lens[ci], c.value.trim().length); });
+    lens[nAx] = Math.max(lens[nAx], String(r.sku || '').length);
+    lens[nAx + 1] = Math.max(lens[nAx + 1], String(r.price || '').length);
+    lens[nAx + 2] = Math.max(lens[nAx + 2], String(r.quantity ?? '').length);
+  });
+
+  const w = lens.map((len, c) => {
+    const key = c < nAx ? 'axis' : EXTRA[c - nAx];
+    const [min, max] = COL_LIMITS[key];
+    return Math.min(max, Math.max(min, len)) + 3; // +3ch برای padding
+  });
+
+  cur.root.querySelectorAll('[data-nav]').forEach((el) => {
+    const c = Number(el.dataset.nav.split(':')[1]);
+    if (w[c]) el.style.setProperty('--w', `${w[c]}ch`);
+  });
+}
+
 function markDirty() {
   cur.dirty = true;
   cur.root.querySelector('#vgDirty')?.classList.remove('hidden');
@@ -233,6 +279,7 @@ function paint(focusSel) {
   root.innerHTML = shellHtml(S());
   attachPriceFormatterAll(root.querySelector('#vgBody'));
   refreshDup();
+  applyWidths();
   if (cur.dirty) root.querySelector('#vgDirty')?.classList.remove('hidden');
   if (focusSel) {
     const el = root.querySelector(focusSel);
@@ -349,7 +396,7 @@ const VariantGrid = {
       if (t.dataset.cell) {
         const [r, c] = t.dataset.cell.split(':').map(Number);
         S().rows[r].cells[c].value = t.value;
-        markDirty(); refreshDup();
+        markDirty(); refreshDup(); applyWidths();
       } else if (t.dataset.field) {
         const r = Number(t.closest('tr').dataset.row);
         S().rows[r][t.dataset.field] = t.value;
@@ -370,7 +417,7 @@ const VariantGrid = {
         markDirty();
       } else if (t.dataset.axisType !== undefined) {
         S().axes[Number(t.dataset.axisType)].input_type = t.value;
-        markDirty(); paint();
+        markDirty(); paint(); applyWidths();
       } else if (t.dataset.hex) {
         const [r, c] = t.dataset.hex.split(':').map(Number);
         S().rows[r].cells[c].hex = t.value.toUpperCase();
