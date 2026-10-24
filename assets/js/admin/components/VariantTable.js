@@ -1,5 +1,6 @@
 import { parsePrice, attachPriceFormatterAll } from '../../utils/priceFormatter.js';
 import { escapeHtml, escapeAttr } from '../../utils/htmlEscape.js';
+import Button from './Button.js';
 
 function labelOf(v) {
   const vals = (v.attribute_values || []).map((av) => av.value).filter(Boolean);
@@ -35,11 +36,17 @@ function desktopRows(list) {
                     class="w-full min-w-[70px] bg-card border border-border rounded-lg px-3 py-2 text-xs text-body focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none transition-colors">
           </td>
           <td class="px-3 py-2">
-            <button type="button" data-action="toggle-active" data-variant-id="${v.id}" aria-label="${inactive ? 'فعال‌سازی' : 'غیرفعال‌سازی'} ${escapeAttr(labelOf(v))}"
-                    class="inline-flex items-center gap-1.5 min-h-[36px] min-w-[44px] justify-center text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-body hover:border-border/80 hover:bg-surface cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-              <i data-lucide="${inactive ? 'power' : 'archive'}" class="w-3.5 h-3.5 shrink-0" aria-hidden="true"></i>
-              <span>${inactive ? 'فعال‌سازی' : 'غیرفعال'}</span>
-            </button>
+            ${Button.render({
+              variant: 'outline',
+              size: 'xs',
+              icon: `<i data-lucide="${inactive ? 'power' : 'archive'}" class="w-3.5 h-3.5 shrink-0" aria-hidden="true"></i>`,
+              label: inactive ? 'فعال‌سازی' : 'غیرفعال',
+              attrs: {
+                'data-action': 'toggle-active',
+                'data-variant-id': v.id,
+                'aria-label': `${inactive ? 'فعال‌سازی' : 'غیرفعال‌سازی'} ${escapeAttr(labelOf(v))}`,
+              },
+            })}
           </td>
         </tr>`;
   }).join('');
@@ -54,11 +61,14 @@ function mobileCards(list) {
       <div class="border border-border rounded-xl bg-card/50 p-4 space-y-3 ${inactive ? 'opacity-60' : ''}" data-variant-id="${v.id}" data-active="${inactive ? 0 : 1}">
         <div class="flex items-start justify-between gap-2">
           <p class="text-sm font-medium text-body leading-5">${escapeHtml(labelOf(v))}</p>
-          <button type="button" data-action="toggle-active" data-variant-id="${v.id}"
-                  class="shrink-0 inline-flex items-center gap-1 min-h-[36px] px-3 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${inactive ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' : 'border-border bg-surface text-muted hover:text-body'}">
-            <i data-lucide="${inactive ? 'power' : 'archive'}" class="w-3.5 h-3.5" aria-hidden="true"></i>
-            ${inactive ? 'فعال‌سازی' : 'غیرفعال'}
-          </button>
+          ${Button.render({
+            variant: inactive ? 'success' : 'secondary',
+            size: 'xs',
+            className: 'rounded-full shrink-0',
+            icon: `<i data-lucide="${inactive ? 'power' : 'archive'}" class="w-3.5 h-3.5" aria-hidden="true"></i>`,
+            label: inactive ? 'فعال‌سازی' : 'غیرفعال',
+            attrs: { 'data-action': 'toggle-active', 'data-variant-id': v.id },
+          })}
         </div>
         ${price === '' ? '<p class="inline-flex items-center gap-1 text-xs text-amber-600" role="status"><i data-lucide="alert-circle" class="w-3 h-3" aria-hidden="true"></i> بدون قیمت — برای نمایش در فروشگاه قیمت وارد کنید</p>' : ''}
         <div class="grid grid-cols-1 gap-3">
@@ -101,12 +111,25 @@ const VariantTable = {
           </div>
           <p class="text-sm text-muted mb-1">${escapeHtml(t.emptyVariants || 'واریانتی وجود ندارد')}</p>
           <p class="text-xs text-dim mb-3">محورها را تکمیل کنید و دکمه «اعمال و تولید واریانت‌ها» را بزنید.</p>
-          ${hasInactive ? `<button type="button" data-action="show-inactive" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-full bg-surface border border-border text-xs text-muted hover:text-body cursor-pointer transition-colors">نمایش ${inact.length.toLocaleString('fa-IR')} واریانت غیرفعال</button>` : ''}
+          ${hasInactive ? Button.render({
+            variant: 'secondary',
+            size: 'xs',
+            className: 'rounded-full',
+            label: `نمایش ${inact.length.toLocaleString('fa-IR')} واریانت غیرفعال`,
+            attrs: { 'data-action': 'show-inactive' },
+          }) : ''}
         </div>`;
     }
 
     const inactiveBar = (!showInactive && inact.length)
-      ? `<button type="button" data-action="show-inactive" class="mt-3 inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-full bg-surface border border-border text-xs text-muted hover:text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i> نمایش ${inact.length.toLocaleString('fa-IR')} غیرفعال</button>`
+      ? Button.render({
+        variant: 'secondary',
+        size: 'xs',
+        className: 'mt-3 rounded-full',
+        icon: '<i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i>',
+        label: `نمایش ${inact.length.toLocaleString('fa-IR')} غیرفعال`,
+        attrs: { 'data-action': 'show-inactive' },
+      })
       : '';
 
     return `

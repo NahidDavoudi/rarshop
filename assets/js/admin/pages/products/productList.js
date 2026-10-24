@@ -4,6 +4,7 @@
 import { openProductEditor, initProductEditor } from './productEditor.js';
 import { renderImageWithFallback } from '../../../utils/imagePlaceholder.js';
 import { escapeHtml } from '../../../utils/htmlEscape.js';
+import Button from '../../components/Button.js';
 
 let _products = [];
 let _categories = [];
@@ -66,24 +67,21 @@ function _renderProducts(list) {
       <td class="px-4 py-3">${_statusBadge(p.status || (p.is_active ? 'active' : 'archived'))}</td>
       <td class="px-4 py-3">
         <div class="flex gap-1">
-          <button onclick="editProduct(${p.id})" title="${_t('common.edit', 'ویرایش')}"
-                  class="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a4 4 0 01-1.414.914l-3 1 1-3a4 4 0 01.914-1.414z"/>
-            </svg>
-          </button>
-          <button onclick="deleteProduct(${p.id},'${escapeHtml(p.name).replace(/'/g, "\\'")}')" title="${_t('common.delete', 'حذف')}"
-                  class="p-2 rounded-lg hover:bg-accent/10 text-accent transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M4 7h16"/>
-            </svg>
-          </button>
+          ${Button.render({
+            variant: 'ghost', size: 'icon',
+            icon: '<i data-lucide="pencil" class="w-5 h-5"></i>',
+            attrs: { onclick: `editProduct(${p.id})`, title: _t('common.edit', 'ویرایش') },
+          })}
+          ${Button.render({
+            variant: 'ghostAccent', size: 'icon',
+            icon: '<i data-lucide="trash-2" class="w-4 h-4"></i>',
+            attrs: { onclick: `deleteProduct(${p.id},'${escapeHtml(p.name).replace(/'/g, "\\'")}')`, title: _t('common.delete', 'حذف') },
+          })}
         </div>
       </td>
     </tr>`;
   }).join('');
+  if (window.lucide) lucide.createIcons();
 }
 
 window.loadProducts = async function () {

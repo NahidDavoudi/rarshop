@@ -3,6 +3,7 @@
  * مدیریت راهنمای سایز: لیست، ایجاد، ویرایش، حذف
  * وابستگی: helpers.js, api.js
  */
+import Button from '../../components/Button.js';
 
 ;(function () {
     'use strict';
@@ -35,14 +36,16 @@
             ${(g.columns || []).length} ستون · ${(g.rows || []).length} ردیف
           </p>
           <div class="flex gap-2 pt-2 border-t border-border">
-            <button onclick="editSizeGuide(${g.id})"
-              class="flex-1 py-2 text-xs font-bold bg-surface hover:bg-card text-muted hover:text-body border border-border rounded-lg transition-all">
-              ${_t('sizeGuides.edit', 'ویرایش')}
-            </button>
-            <button onclick="deleteSizeGuide(${g.id})"
-              class="flex-1 py-2 text-xs font-bold bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 hover:border-accent/60 rounded-lg transition-all">
-              ${_t('sizeGuides.delete', 'حذف')}
-            </button>
+            ${Button.render({
+              variant: 'secondary', size: 'sm', className: 'flex-1',
+              label: _t('sizeGuides.edit', 'ویرایش'),
+              attrs: { onclick: `editSizeGuide(${g.id})` },
+            })}
+            ${Button.render({
+              variant: 'soft', size: 'sm', className: 'flex-1',
+              label: _t('sizeGuides.delete', 'حذف'),
+              attrs: { onclick: `deleteSizeGuide(${g.id})` },
+            })}
           </div>
         </div>`).join('');
     }
@@ -86,9 +89,12 @@
             placeholder="مثلا: سایز"
             class="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm text-body focus:border-accent outline-none">
           ${formState.columns.length > 1 ? `
-            <button type="button" onclick="removeSizeGuideColumn(${idx})" class="text-muted hover:text-accent p-1">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>` : ''}
+            ${Button.render({
+              variant: 'ghost', size: 'none',
+              className: 'text-muted hover:text-accent p-1',
+              icon: '<i data-lucide="trash-2" class="w-4 h-4"></i>',
+              attrs: { onclick: `removeSizeGuideColumn(${idx})` },
+            })}` : ''}
         </div>`).join('');
   
       window.lucide?.createIcons?.();
@@ -131,9 +137,12 @@
             `).join('')}
           </div>
           ${formState.rows.length > 1 ? `
-            <button type="button" onclick="removeSizeGuideRow(${rIdx})" class="text-muted hover:text-accent p-1 shrink-0">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>` : ''}
+            ${Button.render({
+              variant: 'ghost', size: 'none',
+              className: 'text-muted hover:text-accent p-1 shrink-0',
+              icon: '<i data-lucide="trash-2" class="w-4 h-4"></i>',
+              attrs: { onclick: `removeSizeGuideRow(${rIdx})` },
+            })}` : ''}
         </div>`).join('');
   
       window.lucide?.createIcons?.();

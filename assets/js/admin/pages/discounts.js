@@ -3,6 +3,7 @@
  * مدیریت کدهای تخفیف: لیست و ایجاد
  * وابستگی: helpers.js, api.js
  */
+import Button from '../../components/Button.js';
 
 ;(function () {
   'use strict';
@@ -67,18 +68,20 @@
           </div>
           <div class="flex gap-2 pt-1 border-t border-border">
             ${active ? `
-              <button onclick="deactivateDiscount(${d.id})"
-                class="flex-1 py-2 text-xs font-bold bg-surface hover:bg-card
-                       text-muted hover:text-body border border-border
-                       rounded-lg transition-all">
-                ${_t('discounts.deactivate', 'غیرفعال کردن')}
-              </button>` : ''}
-            <button onclick="deleteDiscount(${d.id})"
-              class="flex-1 py-2 text-xs font-bold bg-accent/10 hover:bg-accent/20
-                     text-accent border border-accent/30 hover:border-accent/60
-                     rounded-lg transition-all">
-              ${_t('discounts.delete', 'حذف')}
-            </button>
+              ${Button.render({
+                variant: 'secondary',
+                size: 'sm',
+                className: 'flex-1',
+                label: _t('discounts.deactivate', 'غیرفعال کردن'),
+                attrs: { onclick: `deactivateDiscount(${d.id})` },
+              })}` : ''}
+            ${Button.render({
+              variant: 'soft',
+              size: 'sm',
+              className: 'flex-1',
+              label: _t('discounts.delete', 'حذف'),
+              attrs: { onclick: `deleteDiscount(${d.id})` },
+            })}
           </div>
         </div>`;
     }).join('');

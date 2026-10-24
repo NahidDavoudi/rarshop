@@ -1,6 +1,7 @@
 import GeneralTab from './tabs/generalTab.js';
 import VariantGrid from './tabs/variantGridTab.js';
 import MediaTab from './tabs/mediaTab.js';
+import Button from '../../components/Button.js';
 
 let _editingProdId = null;
 let _categories = [];
@@ -64,15 +65,15 @@ function _renderFullPage() {
           <p class="text-sm text-muted mt-1">${isNew ? 'اطلاعات پایه را ذخیره کنید تا بخش‌های بعدی فعال شوند.' : 'همه بخش‌ها قابل ویرایش هستند.'}</p>
         </div>
         <div class="flex gap-2">
-          <button type="button" id="fullPageBack" class="px-4 py-2 rounded-xl border border-border text-muted hover:text-body bg-body">بازگشت به لیست</button>
+          ${Button.render({ variant: 'secondary', size: 'sm', label: 'بازگشت به لیست', attrs: { id: 'fullPageBack' } })}
         </div>
       </div>
 
       <!-- sticky anchor nav -->
       <div class="sticky top-0 z-20 bg-surface/80 backdrop-blur rounded-2xl border border-border p-2 flex flex-wrap gap-2">
-        <a href="#card-general" class="px-3 py-1.5 rounded-lg text-sm bg-accent text-white">عمومی</a>
-        <a href="#card-media" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">تصاویر</a>
-        <a href="#card-variants" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">واریانت‌ها</a>
+        ${Button.render({ href: '#card-general', variant: 'primary', size: 'none', className: 'px-3 py-1.5 rounded-lg text-sm', label: 'عمومی' })}
+        ${Button.render({ href: '#card-media', variant: 'outline', size: 'none', className: 'px-3 py-1.5 rounded-lg text-sm text-muted hover:text-body', label: 'تصاویر' })}
+        ${Button.render({ href: '#card-variants', variant: 'outline', size: 'none', className: 'px-3 py-1.5 rounded-lg text-sm text-muted hover:text-body', label: 'واریانت‌ها' })}
       </div>
 
       <div id="card-general" class="bg-body border border-border rounded-2xl p-6">
@@ -96,8 +97,8 @@ function _renderFullPage() {
       <div class="sticky bottom-0 z-20 bg-body/90 backdrop-blur border border-border rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-center">
         <p class="text-xs text-muted" id="fullPageDirtyHint">${_dirty ? 'تغییرات ذخیره‌نشده دارید' : 'آماده ذخیره'}</p>
         <div class="flex gap-2">
-          <button type="button" id="fullPageCancel" class="px-6 py-2.5 rounded-xl border border-border text-muted hover:text-body bg-surface">انصراف</button>
-          <button type="button" id="fullPageSave" class="px-8 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-medium">ذخیره</button>
+          ${Button.render({ variant: 'secondary', size: 'md', label: 'انصراف', attrs: { id: 'fullPageCancel' } })}
+          ${Button.render({ variant: 'primary', size: 'md', label: 'ذخیره', attrs: { id: 'fullPageSave' } })}
         </div>
       </div>
     </div>

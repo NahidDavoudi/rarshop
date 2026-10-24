@@ -2,6 +2,8 @@
  * admin/pages/promoBanners.js — مدیریت پوسترهای تبلیغاتی صفحه اصلی
  */
 
+import Button from '../../components/Button.js';
+
 ;(function () {
   'use strict';
 
@@ -52,22 +54,28 @@
               <span class="text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap ${statusBadge}">${statusLabel}</span>
             </div>
             <div class="flex flex-wrap gap-2 pt-2 border-t border-border mt-auto">
-              <button type="button" onclick="movePromoBanner(${b.id}, -1)" ${index === 0 ? 'disabled' : ''}
-                class="py-2 px-3 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all disabled:opacity-40">
-                ${_t('promoBanners.moveUp', 'بالا')}
-              </button>
-              <button type="button" onclick="movePromoBanner(${b.id}, 1)" ${index === _list.length - 1 ? 'disabled' : ''}
-                class="py-2 px-3 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all disabled:opacity-40">
-                ${_t('promoBanners.moveDown', 'پایین')}
-              </button>
-              <button type="button" onclick="togglePromoBanner(${b.id}, ${active ? 0 : 1})"
-                class="flex-1 py-2 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all">
-                ${active ? _t('promoBanners.deactivate', 'غیرفعال') : _t('promoBanners.activate', 'فعال')}
-              </button>
-              <button type="button" onclick="deletePromoBanner(${b.id})"
-                class="flex-1 py-2 text-xs font-bold bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded-lg transition-all">
-                ${_t('promoBanners.delete', 'حذف')}
-              </button>
+              ${Button.render({
+                variant: 'secondary', size: 'sm',
+                label: _t('promoBanners.moveUp', 'بالا'),
+                disabled: index === 0,
+                attrs: { onclick: `movePromoBanner(${b.id}, -1)` },
+              })}
+              ${Button.render({
+                variant: 'secondary', size: 'sm',
+                label: _t('promoBanners.moveDown', 'پایین'),
+                disabled: index === _list.length - 1,
+                attrs: { onclick: `movePromoBanner(${b.id}, 1)` },
+              })}
+              ${Button.render({
+                variant: 'secondary', size: 'sm', className: 'flex-1',
+                label: active ? _t('promoBanners.deactivate', 'غیرفعال') : _t('promoBanners.activate', 'فعال'),
+                attrs: { onclick: `togglePromoBanner(${b.id}, ${active ? 0 : 1})` },
+              })}
+              ${Button.render({
+                variant: 'soft', size: 'sm', className: 'flex-1',
+                label: _t('promoBanners.delete', 'حذف'),
+                attrs: { onclick: `deletePromoBanner(${b.id})` },
+              })}
             </div>
           </div>
         </div>`;

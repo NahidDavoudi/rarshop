@@ -3,6 +3,7 @@
  */
 import { storeConfig, mergeStoreSettings } from '../../config/bootstrap.js';
 import { deepMerge } from '../../utils/deepMerge.js';
+import Button from '../../components/Button.js';
 
 ;(function () {
   'use strict';
@@ -260,8 +261,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="bg-surface border border-border rounded-2xl p-5 space-y-4" data-section-index="${index}">
         <div class="flex items-center justify-between gap-3">
           <p class="font-medium text-body text-sm">${_t('fields.sectionTitle', 'بخش')} ${index + 1}</p>
-          <button type="button" data-remove-section="${index}"
-            class="text-accent hover:bg-accent/10 px-3 py-1.5 rounded-lg text-sm transition-all">${_t('remove', 'حذف')}</button>
+          ${Button.render({
+            variant: 'ghostAccent', size: 'none',
+            className: 'px-3 py-1.5 rounded-lg text-sm',
+            label: _t('remove', 'حذف'),
+            attrs: { 'data-remove-section': index },
+          })}
         </div>
         ${_field(_t('fields.sectionTitle', 'عنوان بخش'), _input(`sectionTitle_${index}`, section.title))}
         ${_field(_t('fields.paragraphs', 'پاراگراف‌ها'), _textarea(`sectionContent_${index}`, _joinLines(section.content), 4))}
@@ -273,10 +278,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
     const cards = sections.map((s, i) => _renderSectionCard(i, s)).join('');
     return `
       <div id="${prefix}SectionsList" class="space-y-4">${cards}</div>
-      <button type="button" data-add-section="${prefix}"
-        class="mt-4 px-4 py-2 rounded-xl border border-border text-sm text-body hover:bg-surface transition-all">
-        + ${_t('addSection', 'افزودن بخش')}
-      </button>`;
+      ${Button.render({
+        variant: 'outline', size: 'none',
+        className: 'mt-4 px-4 py-2 rounded-xl text-sm',
+        label: `+ ${_t('addSection', 'افزودن بخش')}`,
+        attrs: { 'data-add-section': prefix },
+      })}`;
   }
 
   function _renderWhyCard(index, item = {}) {
@@ -284,8 +291,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="bg-surface border border-border rounded-2xl p-5 space-y-4" data-why-index="${index}">
         <div class="flex items-center justify-between gap-3">
           <p class="font-medium text-body text-sm">${index + 1}</p>
-          <button type="button" data-remove-why="${index}"
-            class="text-accent hover:bg-accent/10 px-3 py-1.5 rounded-lg text-sm transition-all">${_t('remove', 'حذف')}</button>
+          ${Button.render({
+            variant: 'ghostAccent', size: 'none',
+            className: 'px-3 py-1.5 rounded-lg text-sm',
+            label: _t('remove', 'حذف'),
+            attrs: { 'data-remove-why': index },
+          })}
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           ${_field(_t('fields.icon', 'آیکون'), _input(`whyIcon_${index}`, item.icon))}
@@ -300,8 +311,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="bg-surface border border-border rounded-2xl p-5" data-stat-index="${index}">
         <div class="flex items-center justify-between gap-3 mb-4">
           <p class="font-medium text-body text-sm">${index + 1}</p>
-          <button type="button" data-remove-stat="${index}"
-            class="text-accent hover:bg-accent/10 px-3 py-1.5 rounded-lg text-sm transition-all">${_t('remove', 'حذف')}</button>
+          ${Button.render({
+            variant: 'ghostAccent', size: 'none',
+            className: 'px-3 py-1.5 rounded-lg text-sm',
+            label: _t('remove', 'حذف'),
+            attrs: { 'data-remove-stat': index },
+          })}
         </div>
         <div class="grid grid-cols-2 gap-4">
           ${_field(_t('fields.value', 'مقدار'), _input(`statValue_${index}`, item.value))}
@@ -315,8 +330,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="bg-surface border border-border rounded-2xl p-5" data-team-index="${index}">
         <div class="flex items-center justify-between gap-3 mb-4">
           <p class="font-medium text-body text-sm">${index + 1}</p>
-          <button type="button" data-remove-team="${index}"
-            class="text-accent hover:bg-accent/10 px-3 py-1.5 rounded-lg text-sm transition-all">${_t('remove', 'حذف')}</button>
+          ${Button.render({
+            variant: 'ghostAccent', size: 'none',
+            className: 'px-3 py-1.5 rounded-lg text-sm',
+            label: _t('remove', 'حذف'),
+            attrs: { 'data-remove-team': index },
+          })}
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           ${_field(_t('fields.name', 'نام'), _input(`teamName_${index}`, item.name))}
@@ -330,8 +349,12 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="bg-surface border border-border rounded-2xl p-5 space-y-4" data-faq-index="${index}">
         <div class="flex items-center justify-between gap-3">
           <p class="font-medium text-body text-sm">${_t('fields.question', 'سوال')} ${index + 1}</p>
-          <button type="button" data-remove-faq="${index}"
-            class="text-accent hover:bg-accent/10 px-3 py-1.5 rounded-lg text-sm transition-all">${_t('remove', 'حذف')}</button>
+          ${Button.render({
+            variant: 'ghostAccent', size: 'none',
+            className: 'px-3 py-1.5 rounded-lg text-sm',
+            label: _t('remove', 'حذف'),
+            attrs: { 'data-remove-faq': index },
+          })}
         </div>
         ${_field(_t('fields.question', 'سوال'), _input(`faqQuestion_${index}`, item.question))}
         ${_field(_t('fields.answer', 'پاسخ'), _textarea(`faqAnswer_${index}`, item.answer, 3))}
@@ -361,17 +384,17 @@ import { deepMerge } from '../../utils/deepMerge.js';
       <div class="border-t border-border pt-6 space-y-4">
         <p class="font-bold text-body">${_t('addWhy', 'مزایا')}</p>
         <div id="whyList" class="space-y-4">${(about.whyChooseUs || []).map((w, i) => _renderWhyCard(i, w)).join('')}</div>
-        <button type="button" id="addWhy" class="px-4 py-2 rounded-xl border border-border text-sm hover:bg-surface">+ ${_t('addWhy', 'افزودن')}</button>
+        ${Button.render({ variant: 'outline', size: 'none', className: 'px-4 py-2 rounded-xl text-sm', label: `+ ${_t('addWhy', 'افزودن')}`, attrs: { id: 'addWhy' } })}
       </div>
       <div class="border-t border-border pt-6 space-y-4">
         <p class="font-bold text-body">${_t('addStat', 'آمار')}</p>
         <div id="statsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">${(about.stats || []).map((s, i) => _renderStatCard(i, s)).join('')}</div>
-        <button type="button" id="addStat" class="px-4 py-2 rounded-xl border border-border text-sm hover:bg-surface">+ ${_t('addStat', 'افزودن آمار')}</button>
+        ${Button.render({ variant: 'outline', size: 'none', className: 'px-4 py-2 rounded-xl text-sm', label: `+ ${_t('addStat', 'افزودن آمار')}`, attrs: { id: 'addStat' } })}
       </div>
       <div class="border-t border-border pt-6 space-y-4">
         <p class="font-bold text-body">${_t('addTeam', 'تیم')}</p>
         <div id="teamList" class="grid grid-cols-1 md:grid-cols-2 gap-4">${(about.team || []).map((m, i) => _renderTeamCard(i, m)).join('')}</div>
-        <button type="button" id="addTeam" class="px-4 py-2 rounded-xl border border-border text-sm hover:bg-surface">+ ${_t('addTeam', 'افزودن عضو')}</button>
+        ${Button.render({ variant: 'outline', size: 'none', className: 'px-4 py-2 rounded-xl text-sm', label: `+ ${_t('addTeam', 'افزودن عضو')}`, attrs: { id: 'addTeam' } })}
       </div>`;
   }
 
@@ -399,7 +422,7 @@ import { deepMerge } from '../../utils/deepMerge.js';
     return `
       ${_renderPageHeaderFields('faq', faq)}
       <div id="faqList" class="space-y-4">${(faq.items || []).map((item, i) => _renderFaqCard(i, item)).join('')}</div>
-      <button type="button" id="addFaq" class="mt-4 px-4 py-2 rounded-xl border border-border text-sm hover:bg-surface">+ ${_t('addFaq', 'افزودن سوال')}</button>`;
+      ${Button.render({ variant: 'outline', size: 'none', className: 'mt-4 px-4 py-2 rounded-xl text-sm', label: `+ ${_t('addFaq', 'افزودن سوال')}`, attrs: { id: 'addFaq' } })}`;
   }
 
   function _renderActivePanel() {

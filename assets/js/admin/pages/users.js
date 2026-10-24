@@ -3,6 +3,7 @@
  * مدیریت کاربران: لیست، جستجو، تغییر نقش، حذف
  * وابستگی: helpers.js, api.js
  */
+import Button from '../../components/Button.js';
 
 ;(function () {
   'use strict';
@@ -56,21 +57,27 @@
         <td class="px-4 py-3 text-xs text-dim">${date}</td>
         <td class="px-4 py-3">
           <div class="flex gap-1">
-            <button onclick="toggleUserRole(${u.id},'${u.role}')" title="${isAdmin ? _t('users.roleUser', 'کاربر') : _t('users.roleAdmin', 'ادمین')}"
-                    class="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors text-xs">
-              ${isAdmin ? '↓' : '↑'}
-            </button>
-            <button onclick="deleteUser(${u.id},'${(u.name || u.phone || '').replace(/'/g, "\\'")}')"
-                    class="p-2 rounded-lg hover:bg-accent/10 text-accent transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M4 7h16"/>
-              </svg>
-            </button>
+            ${Button.render({
+              variant: 'ghost', size: 'icon',
+              className: '!text-amber-600 hover:!bg-amber-50',
+              label: isAdmin ? '↓' : '↑',
+              attrs: {
+                onclick: `toggleUserRole(${u.id},'${u.role}')`,
+                title: isAdmin ? _t('users.roleUser', 'کاربر') : _t('users.roleAdmin', 'ادمین'),
+              },
+            })}
+            ${Button.render({
+              variant: 'ghostAccent', size: 'icon',
+              icon: '<i data-lucide="trash-2" class="w-4 h-4"></i>',
+              attrs: {
+                onclick: `deleteUser(${u.id},'${(u.name || u.phone || '').replace(/'/g, "\\'")}')`,
+              },
+            })}
           </div>
         </td>
       </tr>`;
     }).join('');
+    if (window.lucide) lucide.createIcons();
   }
 
   /* ── Toggle role ───────────────────────────────────────────── */

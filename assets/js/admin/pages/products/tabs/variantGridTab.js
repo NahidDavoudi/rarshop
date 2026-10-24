@@ -5,6 +5,7 @@
  */
 import { attachPriceFormatterAll } from '../../../../utils/priceFormatter.js';
 import { escapeHtml, escapeAttr } from '../../../../utils/htmlEscape.js';
+import Button from '../../../components/Button.js';
 
 const MAX_AXES = 3;
 const MAX_ROWS = 300;
@@ -87,8 +88,11 @@ function headHtml(st) {
             <option value="text" ${a.input_type === 'swatch' ? '' : 'selected'}>متن</option>
             <option value="swatch" ${a.input_type === 'swatch' ? 'selected' : ''}>رنگ</option>
           </select>
-          <button type="button" data-del-axis="${ci}" title="حذف ستون" aria-label="حذف ستون"
-                  class="shrink-0 ${ICON_BTN}">×</button>
+          ${Button.render({
+            variant: 'ghost', size: 'iconSm', className: 'shrink-0',
+            label: '×',
+            attrs: { 'data-del-axis': ci, title: 'حذف ستون', 'aria-label': 'حذف ستون' },
+          })}
         </div>
       </div>
     </th>`).join('');
@@ -96,18 +100,22 @@ function headHtml(st) {
   // در موبایل دکمه‌ی افزودن ستون پایین جدول است، نه توی هدر
   const addAxis = nAx < MAX_AXES
     ? `<th class="${TH} hidden sm:table-cell">
-         <button type="button" data-add-axis
-           class="px-1.5 py-1 rounded-lg border border-dashed border-border text-muted hover:text-body hover:border-accent cursor-pointer whitespace-nowrap text-xs">
-           ＋ ستون پارامتر
-         </button>
+         ${Button.render({
+           variant: 'outline', size: 'none',
+           className: 'px-1.5 py-1 rounded-lg border-dashed text-muted hover:text-body hover:border-accent whitespace-nowrap text-xs',
+           label: '＋ ستون پارامتر',
+           attrs: { 'data-add-axis': '' },
+         })}
        </th>`
     : '';
 
   const fill = (f) =>
-    `<button type="button" data-fill="${f}" title="مقدار سطر اول را برای همه کپی کن"
-       class="ms-0.5 sm:ms-1 text-[10px] sm:text-[11px] text-dim hover:text-accent cursor-pointer">
-       <span class="hidden sm:inline">↓ همه</span><span class="sm:hidden">↓</span>
-     </button>`;
+    Button.render({
+      variant: 'ghost', size: 'none',
+      className: 'ms-0.5 sm:ms-1 !min-h-0 !font-normal text-[10px] sm:text-[11px] !text-dim hover:!text-accent !rounded',
+      label: '<span class="hidden sm:inline">↓ همه</span><span class="sm:hidden">↓</span>',
+      attrs: { 'data-fill': f, title: 'مقدار سطر اول را برای همه کپی کن' },
+    });
 
   return `
     <tr>
@@ -147,10 +155,16 @@ function rowHtml(st, r, i) {
       <td class="${TD}"><input type="text" ${CELL} data-nav="${i}:${nAx + 1}" data-field="price" inputmode="numeric" value="${escapeAttr(r.price)}" placeholder="—"></td>
       <td class="${TD}"><input type="number" ${CELL} data-nav="${i}:${nAx + 2}" data-field="quantity" min="0" value="${Number(r.quantity) || 0}"></td>
       <td class="${TD} text-center whitespace-nowrap">
-        <button type="button" data-dup-row="${i}" title="کپی سطر" aria-label="کپی سطر" class="${ICON_BTN}">⧉</button>
-        <button type="button" data-del-row="${i}" title="حذف سطر" aria-label="حذف سطر" class="${ICON_BTN}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
+        ${Button.render({
+          variant: 'ghost', size: 'iconSm',
+          label: '⧉',
+          attrs: { 'data-dup-row': i, title: 'کپی سطر', 'aria-label': 'کپی سطر' },
+        })}
+        ${Button.render({
+          variant: 'ghostDanger', size: 'iconSm',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+          attrs: { 'data-del-row': i, title: 'حذف سطر', 'aria-label': 'حذف سطر' },
+        })}
       </td>
     </tr>`;
 }
@@ -173,8 +187,12 @@ function shellHtml(st) {
         </p>
         <div class="flex items-center gap-2 shrink-0">
           <span id="vgDirty" class="text-xs text-amber-600 hidden">ذخیره‌نشده</span>
-          <button type="button" data-reset class="min-h-[40px] px-3 sm:px-4 rounded-xl border border-border bg-surface text-xs sm:text-sm text-muted hover:text-body cursor-pointer whitespace-nowrap">بازگردانی</button>
-          <button type="button" data-save class="min-h-[40px] px-4 sm:px-5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium cursor-pointer whitespace-nowrap"><span class="hidden sm:inline">ذخیره واریانت‌ها</span><span class="sm:hidden">ذخیره</span></button>
+          ${Button.render({ variant: 'secondary', size: 'sm', label: 'بازگردانی', attrs: { 'data-reset': '' } })}
+          ${Button.render({
+            variant: 'primary', size: 'sm',
+            label: '<span class="hidden sm:inline">ذخیره واریانت‌ها</span><span class="sm:hidden">ذخیره</span>',
+            attrs: { 'data-save': '' },
+          })}
         </div>
       </div>
 
@@ -188,10 +206,19 @@ function shellHtml(st) {
 
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <button type="button" data-add-row ${canAdd ? '' : 'disabled'}
-                  class="min-h-[40px] px-4 rounded-xl border border-dashed border-border text-sm text-muted hover:text-body hover:border-accent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">＋ سطر جدید</button>
-          ${st.axes.length < MAX_AXES ? `<button type="button" data-add-axis
-                  class="sm:hidden min-h-[40px] px-3 rounded-xl border border-dashed border-border text-sm text-muted hover:text-body hover:border-accent cursor-pointer">＋ ستون</button>` : ''}
+          ${Button.render({
+            variant: 'outline', size: 'sm',
+            className: 'border-dashed text-muted hover:text-body hover:border-accent',
+            label: '＋ سطر جدید',
+            disabled: !canAdd,
+            attrs: { 'data-add-row': '' },
+          })}
+          ${st.axes.length < MAX_AXES ? Button.render({
+            variant: 'outline', size: 'sm',
+            className: 'sm:hidden border-dashed text-muted hover:text-body hover:border-accent',
+            label: '＋ ستون',
+            attrs: { 'data-add-axis': '' },
+          }) : ''}
         </div>
         <p id="vgSummary" class="text-xs text-muted"></p>
       </div>

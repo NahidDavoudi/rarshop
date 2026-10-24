@@ -1,4 +1,5 @@
 import VariantTable from '../../../components/VariantTable.js';
+import Button from '../../../components/Button.js';
 import { escapeHtml, escapeAttr } from '../../../../utils/htmlEscape.js';
 
 const PRESET_SIZES = ['M', 'L', 'XL', 'XXL', '3XL', '4XL'];
@@ -20,10 +21,17 @@ function renderAxisCard(axis, idx, total, t) {
       ${swatch ? `<input type="color" data-value-picker="${v.id}" data-axis-id="${axis.id}" value="${escapeAttr(v.swatch_hex || '#000000')}" class="w-6 h-6 rounded-full border border-border cursor-pointer shrink-0" title="رنگ">` : ''}
       ${swatch && v.swatch_hex ? `<span class="w-3.5 h-3.5 rounded-full border border-border shrink-0" style="background:${escapeAttr(v.swatch_hex)}" aria-hidden="true"></span>` : ''}
       <span class="truncate min-w-0">${escapeHtml(v.value)}</span>
-      <button type="button" data-del-value="${v.id}" data-axis-id="${axis.id}" aria-label="حذف ${escapeAttr(v.value)}"
-              class="shrink-0 w-7 h-7 rounded-full bg-body border border-border flex items-center justify-center text-dim hover:text-accent hover:border-accent/40 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-        <i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>
-      </button>
+      ${Button.render({
+        variant: 'none',
+        size: 'none',
+        className: 'shrink-0 w-7 h-7 rounded-full bg-body border border-border flex items-center justify-center text-dim hover:text-accent hover:border-accent/40 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none',
+        icon: '<i data-lucide="x" class="w-3.5 h-3.5" aria-hidden="true"></i>',
+        attrs: {
+          'data-del-value': v.id,
+          'data-axis-id': axis.id,
+          'aria-label': `حذف ${escapeAttr(v.value)}`,
+        },
+      })}
     </span>`).join('')
     || `<span class="text-xs text-dim">${escapeHtml(t.noValues || 'مقداری تعریف نشده — با Enter یا ویرگول اضافه کنید')}</span>`;
 
@@ -45,18 +53,26 @@ function renderAxisCard(axis, idx, total, t) {
         </select>
       </label>
       <div class="flex items-center gap-1.5 self-start sm:self-end pb-0 sm:pb-0 pt-1 sm:pt-5">
-        <button type="button" data-axis-up="${axis.id}" ${idx === 0 ? 'disabled' : ''} aria-label="جابجایی بالا"
-                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-body hover:bg-card disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-          <i data-lucide="chevron-up" class="w-4 h-4" aria-hidden="true"></i>
-        </button>
-        <button type="button" data-axis-down="${axis.id}" ${idx === total - 1 ? 'disabled' : ''} aria-label="جابجایی پایین"
-                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-body hover:bg-card disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-          <i data-lucide="chevron-down" class="w-4 h-4" aria-hidden="true"></i>
-        </button>
-        <button type="button" data-del-axis="${axis.id}" aria-label="حذف محور"
-                class="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-muted hover:text-accent hover:border-accent/30 hover:bg-accent/5 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-          <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
-        </button>
+        ${Button.render({
+          variant: 'secondary',
+          size: 'icon',
+          icon: '<i data-lucide="chevron-up" class="w-4 h-4" aria-hidden="true"></i>',
+          disabled: idx === 0,
+          attrs: { 'data-axis-up': axis.id, 'aria-label': 'جابجایی بالا' },
+        })}
+        ${Button.render({
+          variant: 'secondary',
+          size: 'icon',
+          icon: '<i data-lucide="chevron-down" class="w-4 h-4" aria-hidden="true"></i>',
+          disabled: idx === total - 1,
+          attrs: { 'data-axis-down': axis.id, 'aria-label': 'جابجایی پایین' },
+        })}
+        ${Button.render({
+          variant: 'ghostAccent',
+          size: 'icon',
+          icon: '<i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>',
+          attrs: { 'data-del-axis': axis.id, 'aria-label': 'حذف محور' },
+        })}
       </div>
     </div>
     <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
@@ -80,9 +96,9 @@ function renderAxesSection(axes, variants, t) {
     return `
     <div class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button type="button" data-preset="clothing" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i> پوشاک (سایز + رنگ)</button>
-        <button type="button" data-preset="simple" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-accent bg-accent/10 text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> بدون تنوع ✓</button>
-        <button type="button" data-preset="custom" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i> سفارشی</button>
+        ${Button.render({ variant: 'secondary', size: 'md', icon: '<i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'پوشاک (سایز + رنگ)', attrs: { 'data-preset': 'clothing' } })}
+        ${Button.render({ variant: 'soft', size: 'md', icon: '<i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'بدون تنوع ✓', attrs: { 'data-preset': 'simple' } })}
+        ${Button.render({ variant: 'secondary', size: 'md', icon: '<i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'سفارشی', attrs: { 'data-preset': 'custom' } })}
       </div>
       <div class="border border-border rounded-2xl p-4 bg-card/40 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <label class="space-y-1">
@@ -107,15 +123,22 @@ function renderAxesSection(axes, variants, t) {
   return `
   <div class="space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-      <button type="button" data-preset="clothing" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i> پوشاک</button>
-      <button type="button" data-preset="simple" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i> بدون تنوع</button>
-      <button type="button" data-preset="custom" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-border bg-surface hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i> سفارشی</button>
+      ${Button.render({ variant: 'secondary', size: 'md', icon: '<i data-lucide="shirt" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'پوشاک', attrs: { 'data-preset': 'clothing' } })}
+      ${Button.render({ variant: 'secondary', size: 'md', icon: '<i data-lucide="minus" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'بدون تنوع', attrs: { 'data-preset': 'simple' } })}
+      ${Button.render({ variant: 'secondary', size: 'md', icon: '<i data-lucide="pencil" class="w-4 h-4 shrink-0" aria-hidden="true"></i>', label: 'سفارشی', attrs: { 'data-preset': 'custom' } })}
     </div>
     <div class="space-y-3" id="axesCards">
       ${axes.map((a, i) => renderAxisCard(a, i, axes.length, t)).join('')}
     </div>
     ${axes.length < 3
-      ? `<button type="button" data-add-axis class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-dashed border-border bg-transparent text-muted hover:text-body hover:border-accent hover:bg-accent/5 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> افزودن محور (حداکثر ۳)</button>`
+      ? Button.render({
+        variant: 'outline',
+        size: 'md',
+        className: 'border-dashed bg-transparent text-muted hover:text-body hover:bg-accent/5',
+        icon: '<i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>',
+        label: 'افزودن محور (حداکثر ۳)',
+        attrs: { 'data-add-axis': '' },
+      })
       : `<p class="inline-flex items-center gap-1.5 text-xs text-muted"><i data-lucide="info" class="w-3.5 h-3.5" aria-hidden="true"></i> سقف ۳ محور رسیده‌اید.</p>`}
   </div>`;
 }
@@ -135,14 +158,20 @@ const VariantsTab = {
             دکمه «پیش‌نمایش» را بزنید تا تعداد واریانت‌های جدید / بدون تغییر / غیرفعال‌شونده نمایش داده شود.
           </div>
           <div class="flex flex-col sm:flex-row gap-2 mt-4">
-            <button type="button" id="btnPreviewVariants"
-                    class="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-medium bg-surface border border-border text-body hover:bg-card hover:border-border/80 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-              <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i> پیش‌نمایش
-            </button>
-            <button type="button" id="btnGenerateVariants"
-                    class="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl text-sm font-medium bg-accent hover:bg-accent-hover text-white cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">
-              <i data-lucide="layers" class="w-4 h-4" aria-hidden="true"></i> ${t.generateVariants || 'اعمال و تولید واریانت‌ها'}
-            </button>
+            ${Button.render({
+              variant: 'secondary',
+              size: 'md',
+              icon: '<i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>',
+              label: 'پیش‌نمایش',
+              attrs: { id: 'btnPreviewVariants' },
+            })}
+            ${Button.render({
+              variant: 'primary',
+              size: 'md',
+              icon: '<i data-lucide="layers" class="w-4 h-4" aria-hidden="true"></i>',
+              label: t.generateVariants || 'اعمال و تولید واریانت‌ها',
+              attrs: { id: 'btnGenerateVariants' },
+            })}
           </div>
         </section>
       </div>`;
@@ -158,7 +187,13 @@ const VariantsTab = {
             <select id="variantFilterValue" class="min-h-[40px] bg-surface border border-border rounded-xl px-3 py-2 text-sm text-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none cursor-pointer transition-colors">
               <option value="">همه مقادیر</option>
             </select>
-            <button type="button" id="btnToggleInactive" class="inline-flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-muted hover:text-body hover:bg-card cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"><i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i> نمایش غیرفعال‌ها</button>
+            ${Button.render({
+              variant: 'secondary',
+              size: 'xs',
+              icon: '<i data-lucide="eye" class="w-3.5 h-3.5" aria-hidden="true"></i>',
+              label: 'نمایش غیرفعال‌ها',
+              attrs: { id: 'btnToggleInactive' },
+            })}
           </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-2 mb-4">
@@ -173,7 +208,13 @@ const VariantsTab = {
                    class="w-full min-h-[44px] bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-body placeholder:text-dim focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-colors">
           </label>
           <div class="flex items-end">
-            <button type="button" id="btnBulkApply" class="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-surface border border-border hover:bg-card text-sm font-medium text-body cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none">اعمال گروهی</button>
+            ${Button.render({
+              variant: 'secondary',
+              size: 'md',
+              className: 'w-full sm:w-auto',
+              label: 'اعمال گروهی',
+              attrs: { id: 'btnBulkApply' },
+            })}
           </div>
         </div>
         <div id="variantTableWrap">${VariantTable.render({ variants, t })}</div>
@@ -205,7 +246,8 @@ const VariantsTab = {
         const vid = Number(tg.dataset.variantId);
         try {
           window.setLoading?.(true);
-          const row = tg.closest('[data-variant-id]');
+          // fix: خود دکمه هم data-variant-id دارد؛ closest باید به والدِ دارای data-active برسد
+          const row = tg.closest('[data-active]');
           await window.API.products.updateVariant(vid, { is_active: row?.dataset.active === '1' ? 0 : 1 });
           await this._reloadProduct(container, t);
         } catch (err) {
@@ -678,6 +720,7 @@ const VariantsTab = {
       wrap.innerHTML = VariantTable.render({ variants, t, showInactive: this._state.showInactive, filterValueId: this._state.filterValueId });
       VariantTable.bindPriceInputs(wrap);
       this._bindTableActions(container, t);
+      if (window.lucide) lucide.createIcons();
     }
   },
   bindPriceInputs(container) {

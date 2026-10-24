@@ -3,6 +3,7 @@
  * مدیریت سفارش‌ها: لیست، جزئیات، فیلتر، تغییر وضعیت، تایید/رد رسید
  */
 import OrderDetail from '../../components/OrderDetail.js';
+import Button from '../../components/Button.js';
 
 ;(function () {
   'use strict';
@@ -97,21 +98,28 @@ import OrderDetail from '../../components/OrderDetail.js';
       const receiptUrl = o.receipt_path || o.receipt_file || o.receipt?.file_path || '';
       const receiptHtml = receiptUrl ? `
         <div class="flex flex-wrap gap-1 mt-1.5">
-          <a href="${receiptUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()"
-             class="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors">
-            ${_t('orders.viewReceipt', 'مشاهده رسید')}
-          </a>
+          ${Button.render({
+            variant: 'soft', size: 'none',
+            className: 'text-[10px] px-2 py-0.5 rounded-md',
+            label: _t('orders.viewReceipt', 'مشاهده رسید'),
+            href: receiptUrl,
+            attrs: { target: '_blank', rel: 'noopener noreferrer', onclick: 'event.stopPropagation()' },
+          })}
           ${o.status === 'pending' ? `
-          <button type="button" onclick="event.stopPropagation(); approveReceipt(${o.id})"
-                  class="flex items-center gap-1 text-[10px] px-2 py-0.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors">
-            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            ${_t('orders.approve', 'تایید')}
-          </button>
-          <button type="button" onclick="event.stopPropagation(); openRejectReceiptModal(${o.id})"
-                  class="flex items-center gap-1 text-[10px] px-2 py-0.5 bg-accent/10 text-accent rounded-md hover:bg-accent/20 transition-colors">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            ${_t('orders.reject', 'رد')}
-          </button>` : ''}
+          ${Button.render({
+            variant: 'success', size: 'none',
+            className: 'text-[10px] px-2 py-0.5 rounded-md',
+            icon: '<i data-lucide="check" class="w-3.5 h-3.5"></i>',
+            label: _t('orders.approve', 'تایید'),
+            attrs: { onclick: `event.stopPropagation(); approveReceipt(${o.id})` },
+          })}
+          ${Button.render({
+            variant: 'soft', size: 'none',
+            className: 'text-[10px] px-2 py-0.5 rounded-md',
+            icon: '<i data-lucide="x" class="w-3.5 h-3.5"></i>',
+            label: _t('orders.reject', 'رد'),
+            attrs: { onclick: `event.stopPropagation(); openRejectReceiptModal(${o.id})` },
+          })}` : ''}
         </div>` : '';
 
       return `<tr class="hover:bg-row transition-colors cursor-pointer" onclick="viewOrderDetail(${o.id})">
@@ -128,10 +136,12 @@ import OrderDetail from '../../components/OrderDetail.js';
         <td class="px-4 py-3">${statusBadge(o.status)}</td>
         <td class="px-4 py-3" onclick="event.stopPropagation()">
           <div class="flex items-center gap-2">
-            <button type="button" onclick="viewOrderDetail(${o.id})"
-                    class="text-xs px-2.5 py-1.5 rounded-lg border border-border text-muted hover:text-body hover:border-accent/40 transition-colors">
-              جزئیات
-            </button>
+            ${Button.render({
+              variant: 'outline', size: 'none',
+              className: 'text-xs px-2.5 py-1.5 rounded-lg',
+              label: 'جزئیات',
+              attrs: { onclick: `viewOrderDetail(${o.id})` },
+            })}
             <select onchange="changeOrderStatus(${o.id},this.value)"
                     class="text-xs bg-card border border-border rounded-lg px-2 py-1.5 text-body focus:outline-none focus:border-accent">
               ${Object.entries(STATUS_MAP).map(([k, v]) =>
@@ -142,6 +152,7 @@ import OrderDetail from '../../components/OrderDetail.js';
         </td>
       </tr>`;
     }).join('');
+    if (window.lucide) lucide.createIcons();
   }
 
   /* ── Receipt actions ───────────────────────────────────────── */

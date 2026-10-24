@@ -2,6 +2,8 @@
  * admin/pages/heroSlides.js — مدیریت تصاویر Hero صفحه اصلی
  */
 
+import Button from '../../components/Button.js';
+
 ;(function () {
   'use strict';
 
@@ -50,22 +52,28 @@
               <span class="text-xs px-2.5 py-1 rounded-full font-bold whitespace-nowrap ${statusBadge}">${statusLabel}</span>
             </div>
             <div class="flex flex-wrap gap-2 pt-2 border-t border-border mt-auto">
-              <button type="button" onclick="moveHeroSlide(${slide.id}, -1)" ${index === 0 ? 'disabled' : ''}
-                class="py-2 px-3 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all disabled:opacity-40">
-                ${_t('heroSlides.moveUp', 'بالا')}
-              </button>
-              <button type="button" onclick="moveHeroSlide(${slide.id}, 1)" ${index === _list.length - 1 ? 'disabled' : ''}
-                class="py-2 px-3 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all disabled:opacity-40">
-                ${_t('heroSlides.moveDown', 'پایین')}
-              </button>
-              <button type="button" onclick="toggleHeroSlide(${slide.id}, ${active ? 0 : 1})"
-                class="flex-1 py-2 text-xs font-bold bg-surface hover:bg-card text-muted border border-border rounded-lg transition-all">
-                ${active ? _t('heroSlides.deactivate', 'غیرفعال') : _t('heroSlides.activate', 'فعال')}
-              </button>
-              <button type="button" onclick="deleteHeroSlide(${slide.id})"
-                class="flex-1 py-2 text-xs font-bold bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded-lg transition-all">
-                ${_t('heroSlides.delete', 'حذف')}
-              </button>
+              ${Button.render({
+                variant: 'secondary', size: 'sm',
+                label: _t('heroSlides.moveUp', 'بالا'),
+                disabled: index === 0,
+                attrs: { onclick: `moveHeroSlide(${slide.id}, -1)` },
+              })}
+              ${Button.render({
+                variant: 'secondary', size: 'sm',
+                label: _t('heroSlides.moveDown', 'پایین'),
+                disabled: index === _list.length - 1,
+                attrs: { onclick: `moveHeroSlide(${slide.id}, 1)` },
+              })}
+              ${Button.render({
+                variant: 'secondary', size: 'sm', className: 'flex-1',
+                label: active ? _t('heroSlides.deactivate', 'غیرفعال') : _t('heroSlides.activate', 'فعال'),
+                attrs: { onclick: `toggleHeroSlide(${slide.id}, ${active ? 0 : 1})` },
+              })}
+              ${Button.render({
+                variant: 'soft', size: 'sm', className: 'flex-1',
+                label: _t('heroSlides.delete', 'حذف'),
+                attrs: { onclick: `deleteHeroSlide(${slide.id})` },
+              })}
             </div>
           </div>
         </div>`;
