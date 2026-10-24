@@ -4,3 +4,5 @@ api/v1/.htaccess
 api/database/
 .opencode/
 
+js_merged
+api_merged
