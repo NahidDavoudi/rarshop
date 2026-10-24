@@ -15,7 +15,7 @@ const RelatedProductCard = {
     const addBtn = Button.render({
       variant: 'aluminum',
       size: 'icon',
-      label: '+',
+      icon: '<i data-lucide="plus" class="w-4 h-4"></i>',
       className: 'add-to-cart-quick shrink-0 !shadow-none',
       attrs: { 'data-product-id': p.id, title: 'افزودن به سبد' },
       disabled: p.stock === 0,

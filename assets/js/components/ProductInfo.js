@@ -119,7 +119,6 @@ function renderColorSelectedLabel(axis, selectedValues) {
   if (!selectedId) return '';
   const match = (axis.values || []).find((v) => Number(v.id) === Number(selectedId));
   if (!match) return '';
-  const t = storeConfig.texts.product;
   return `<span class="text-xs text-muted font-normal mr-1">(${escapeHtml(match.value)})</span>`;
 }
 
@@ -168,6 +167,9 @@ const ProductInfo = {
       bullets ? `<ul class="pb-5 space-y-2 list-disc list-inside marker:text-muted">${bullets}</ul>` : '',
     ].filter(Boolean).join('');
 
+    const qtyBtnDisabled = outOfStock ? ' disabled' : '';
+    const qtyBtnState = outOfStock ? ' opacity-30 pointer-events-none' : '';
+
     return `
       <div class="product-info text-right">
         <h1 class="text-2xl md:text-4xl font-bold text-body leading-tight mb-3">${safeName}</h1>
@@ -176,9 +178,15 @@ const ProductInfo = {
 
         <div class="flex items-center gap-3 mb-4">
           <div class="flex items-center border border-black/10 rounded-full overflow-hidden shrink-0" dir="ltr">
-            <button type="button" id="qty-minus" class="w-10 h-10 flex items-center justify-center text-body hover:bg-black/5 transition-colors">−</button>
+            <button type="button" id="qty-minus" aria-label="کاهش تعداد"${qtyBtnDisabled}
+                    class="w-10 h-10 flex items-center justify-center text-body hover:bg-black/5 transition-colors${qtyBtnState}">
+              <i data-lucide="minus" class="w-4 h-4"></i>
+            </button>
             <span id="qty-value" class="w-10 text-center text-sm font-medium text-body">1</span>
-            <button type="button" id="qty-plus" class="w-10 h-10 flex items-center justify-center text-body hover:bg-black/5 transition-colors">+</button>
+            <button type="button" id="qty-plus" aria-label="افزایش تعداد"${qtyBtnDisabled}
+                    class="w-10 h-10 flex items-center justify-center text-body hover:bg-black/5 transition-colors${qtyBtnState}">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
           </div>
           <div class="flex-1">
             ${Button.render({
@@ -235,7 +243,41 @@ const ProductInfo = {
       ? findInitialSelection(variants, variantAxes)
       : {};
     let qty = 1;
-    let maxQty = callbacks.maxQty || 99;
+
+    // موجودی مرجع برای محصولات بدون واریانت (از product.js پاس داده می‌شود)
+    const fallbackStock = Number(callbacks.maxQty) || 99;
+    let maxQty = Math.max(1, Math.min(fallbackStock, 99));
+
+    // ── خواندن موجودی واریانت با تحمل شکل‌های مختلف داده ──
+    // اگر داده‌ی موجودی در پاسخ API نبود، null برمی‌گرداند (نامشخص، نه صفر)
+    function readVariantStock(variant) {
+      if (!variant) return null;
+      const raw = variant.inventory?.quantity
+        ?? variant.inventory_quantity
+        ?? variant.stock
+        ?? variant.qty;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function syncQtyDisplay() {
+      const el = container.querySelector('#qty-value');
+      if (el) el.textContent = qty;
+    }
+
+    // وقتی محصول ناموجود است دکمه‌های تعداد هم غیرفعال می‌شوند
+    // تا «کار نکردن» آن‌ها طبیعی و قابل‌فهم به نظر برسد
+    function setQtyButtonsDisabled(disabled) {
+      ['#qty-minus', '#qty-plus'].forEach((sel) => {
+        const btn = container.querySelector(sel);
+        if (!btn) return;
+        btn.disabled = disabled;
+        btn.classList.toggle('opacity-30', disabled);
+        btn.classList.toggle('pointer-events-none', disabled);
+      });
+      const plusBtn = container.querySelector('#qty-plus');
+      if (plusBtn) plusBtn.title = maxQty > 1 ? `حداکثر ${maxQty} عدد` : '';
+    }
 
     function applyButtonState(btn, axis, valueId) {
       const selectable = isValueSelectable(variants, variantAxes, selected, axis, valueId);
@@ -292,13 +334,21 @@ const ProductInfo = {
       applyHiddenAxisDefaults(variantAxes, selected);
       const variant = findMatchingVariant(variants, variantAxes, selected);
       const allSelected = isAxisSelectionComplete(variantAxes, selected);
-      const stock = variant ? Number(variant.inventory?.quantity ?? 0) : 0;
+      const hasVariantData = Array.isArray(variants) && variants.length > 0;
 
-      maxQty = Math.max(1, stock || 1);
-      if (variant && stock > 0 && qty > stock) {
-        qty = stock;
-        const qtyVal = container.querySelector('#qty-value');
-        if (qtyVal) qtyVal.textContent = qty;
+      // ── تعیین موجودی مؤثر ──
+      // اولویت: موجودی واریانت انتخاب‌شده → موجودی محصول (از product.js)
+      // اگر واریانت هنوز کامل انتخاب نشده ولی داده موجودی غایب است،
+      // به جای صفر کردن (که دکمه‌ها را می‌کُشت) از موجودی محصول استفاده می‌کنیم.
+      const variantStock = readVariantStock(variant);
+      const stock = hasVariantData
+        ? (variantStock != null ? variantStock : (fallbackStock > 1 ? fallbackStock : 99))
+        : fallbackStock;
+
+      maxQty = Math.max(1, Math.min(Number(stock) || 1, 99));
+      if (stock > 0 && qty > maxQty) {
+        qty = maxQty;
+        syncQtyDisplay();
       }
 
       const priceEl = container.querySelector('#product-live-price');
@@ -309,8 +359,12 @@ const ProductInfo = {
       const addBtn = container.querySelector('.product-add-btn');
       const quickBtn = container.querySelector('#quick-buy-btn');
       const stockHint = container.querySelector('#product-stock-hint');
-      const canOrder = variant && stock > 0;
+
+      const canOrder = hasVariantData ? (!!variant && stock > 0) : stock > 0;
       const out = !canOrder;
+
+      // دکمه‌های +/- فقط وقتی واقعاً ناموجود است غیرفعال می‌شوند
+      setQtyButtonsDisabled(out);
 
       if (addBtn) {
         Button.setDisabled(addBtn, out);
@@ -325,7 +379,7 @@ const ProductInfo = {
       if (stockHint) {
         let hint = '';
         let isAccent = false;
-        if (visibleAxes.length && !allSelected) {
+        if (hasVariantData && visibleAxes.length && !allSelected) {
           hint = t.selectOptionsHint || t.selectVariant;
           isAccent = true;
         } else if (out) {
@@ -345,6 +399,10 @@ const ProductInfo = {
       callbacks.onVariantChange?.(variant);
     }
 
+    // ── توجه: همه‌ی listenerها قبل از اولین updateUI() وصل می‌شوند ──
+    // تا اگر updateUI خطا بدهد، دکمه‌ها هیچ‌وقت «مرده» باقی نمانند.
+
+    // ── انتخاب واریانت ──
     container.querySelectorAll('.product-variant-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (btn.disabled) return;
@@ -353,20 +411,17 @@ const ProductInfo = {
       });
     });
 
-    updateUI();
-
-    const qtyVal = container.querySelector('#qty-value');
+    // ── دکمه‌های تعداد ──
     container.querySelector('#qty-minus')?.addEventListener('click', () => {
       qty = Math.max(1, qty - 1);
-      if (qtyVal) qtyVal.textContent = qty;
+      syncQtyDisplay();
     });
     container.querySelector('#qty-plus')?.addEventListener('click', () => {
-      const variant = findMatchingVariant(variants, variantAxes, selected);
-      const stock = variant ? Number(variant.inventory?.quantity ?? 0) : maxQty;
-      qty = Math.min(Math.max(1, stock), qty + 1);
-      if (qtyVal) qtyVal.textContent = qty;
+      qty = Math.min(maxQty, qty + 1);
+      syncQtyDisplay();
     });
 
+    // ── افزودن به سبد ──
     container.querySelector('.product-add-btn')?.addEventListener('click', async () => {
       const variant = findMatchingVariant(variants, variantAxes, selected);
       await callbacks.onAddToCart?.({ variant, qty });
@@ -377,6 +432,7 @@ const ProductInfo = {
       await callbacks.onQuickBuy?.({ variant, qty });
     });
 
+    // ── آکاردیون توضیحات / ارسال ──
     container.querySelectorAll('.product-acc-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const key = btn.dataset.accordion;
@@ -389,6 +445,9 @@ const ProductInfo = {
         if (icon) icon.classList.toggle('rotate-180', !isOpen);
       });
     });
+
+    // رندر اولیه‌ی وضعیت — حالا بعد از اتصال کامل eventها
+    updateUI();
   },
 };
 

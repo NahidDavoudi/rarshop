@@ -1,3 +1,4 @@
+// components/ProductCard.js
 import { storeConfig } from '../config/bootstrap.js';
 import { formatPrice } from '../utils/priceFormatter.js';
 import { renderImageWithFallback } from '../utils/imagePlaceholder.js';
@@ -22,7 +23,7 @@ const ProductCard = {
     const addBtn = Button.render({
       variant: 'aluminum',
       size: 'icon',
-      label: '+',
+      icon: '<i data-lucide="plus" class="w-4 h-4"></i>',
       className: 'add-to-cart-quick shrink-0 !shadow-none',
       attrs: { 'data-product-id': p.id, title: 'افزودن به سبد' },
       disabled: p.stock === 0,
@@ -57,22 +58,30 @@ const ProductCard = {
         if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') return;
         const id = btn.dataset.productId;
         if (!id) return;
-        const orig = btn.querySelector('.btn-inner')?.textContent || btn.textContent;
-        btn.disabled = true;
-        btn.setAttribute('aria-disabled', 'true');
+
         const inner = btn.querySelector('.btn-inner');
-        if (inner) inner.textContent = '✓';
-        else btn.textContent = '✓';
+        const origHTML = inner?.innerHTML || '';
+
+        // lock + state موفق
+        Button.setDisabled(btn, true);
         btn.classList.add('is-success');
+        if (inner) {
+          inner.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+          window.lucide?.createIcons?.();
+        }
+
         try {
           await callbacks.onAddToCart?.(id);
         } catch (_) { /* page handles toast */ }
+
         setTimeout(() => {
-          btn.disabled = false;
-          btn.removeAttribute('aria-disabled');
-          if (inner) inner.textContent = orig;
-          else btn.textContent = orig;
+          if (!btn.isConnected) return;
           btn.classList.remove('is-success');
+          if (inner) {
+            inner.innerHTML = origHTML;
+            window.lucide?.createIcons?.();
+          }
+          Button.setDisabled(btn, false);
         }, 1800);
       });
     });

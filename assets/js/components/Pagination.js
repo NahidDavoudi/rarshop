@@ -6,7 +6,10 @@ const Pagination = {
     const end = Math.min(page * perPage, total);
 
     let buttons = `<button data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}
-      class="w-7 h-7 rounded-lg border border-border text-muted hover:border-accent/40 disabled:opacity-30 text-xs transition-colors">‹</button>`;
+      class="w-7 h-7 rounded-lg border border-border text-muted hover:border-accent/40 disabled:opacity-30 transition-colors inline-flex items-center justify-center"
+      aria-label="صفحه قبل">
+      <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+    </button>`;
 
     for (let p = 1; p <= totalPages; p++) {
       buttons += `<button data-page="${p}"
@@ -16,7 +19,10 @@ const Pagination = {
     }
 
     buttons += `<button data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}
-      class="w-7 h-7 rounded-lg border border-border text-muted hover:border-accent/40 disabled:opacity-30 text-xs transition-colors">›</button>`;
+      class="w-7 h-7 rounded-lg border border-border text-muted hover:border-accent/40 disabled:opacity-30 transition-colors inline-flex items-center justify-center"
+      aria-label="صفحه بعد">
+      <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+    </button>`;
 
     return {
       info: `نمایش ${start.toLocaleString('fa-IR')} تا ${end.toLocaleString('fa-IR')} از ${total.toLocaleString('fa-IR')}`,

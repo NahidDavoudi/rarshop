@@ -33,8 +33,9 @@ const OrderRow = {
         </td>
         <td class="py-4 px-5">
           <button type="button" data-order-detail="${o.id}"
-                  class="text-xs text-muted hover:text-accent transition-colors font-medium">
-            جزئیات ←
+                  class="inline-flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors font-medium">
+            <span>جزئیات</span>
+            <i data-lucide="chevron-left" class="w-3 h-3"></i>
           </button>
         </td>
       </tr>`;
