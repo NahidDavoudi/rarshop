@@ -10,6 +10,8 @@ use PDO;
 
 class VariantService
 {
+    use VariantGridSync;
+
     private ProductVariantAxisModel $axisModel;
     private ProductAxisValueModel $axisValueModel;
     private ProductVariantLinkModel $linkModel;

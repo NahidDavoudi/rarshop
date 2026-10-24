@@ -1,5 +1,5 @@
 import GeneralTab from './tabs/generalTab.js';
-import VariantsTab from './tabs/variantsTab.js';
+import VariantGrid from './tabs/variantGridTab.js';
 import MediaTab from './tabs/mediaTab.js';
 
 let _editingProdId = null;
@@ -31,28 +31,12 @@ function _texts() {
     price: _t('products.price', 'قیمت'),
     stock: _t('products.stock', 'موجودی'),
     featured: _t('products.featured', 'محصول ویژه'),
-    generateVariants: _t('products.generateVariants', 'تولید واریانت‌ها'),
-    selectStandardSizes: _t('products.selectStandardSizes', 'انتخاب سایزهای استاندارد'),
-    addColor: _t('products.addColor', 'افزودن رنگ'),
-    addColorHint: _t('products.addColorHint', 'رنگ جدید به لیست اضافه می‌شود.'),
-    colorNameLabel: _t('products.colorNameLabel', 'نام رنگ'),
-    colorNamePlaceholder: _t('products.colorNamePlaceholder', 'مثال: قرمز'),
-    colorHexLabel: _t('products.colorHexLabel', 'کد رنگ'),
-    noValues: _t('products.noValues', 'مقداری تعریف نشده'),
-    noAxes: _t('products.noAxes', 'محور واریانتی تعریف نشده'),
-    variantsHint: _t('products.variantsHint', 'محورهای واریانت را انتخاب و تولید کنید.'),
-    variantTitle: _t('products.variantTitle', 'عنوان'),
-    emptyVariants: _t('products.emptyVariants', 'واریانتی وجود ندارد'),
     addImage: _t('products.addImage', 'افزودن تصویر'),
     mainImage: _t('products.mainImage', 'اصلی'),
     tabGeneral: _t('products.tabGeneral', 'عمومی'),
     tabVariants: _t('products.tabVariants', 'واریانت‌ها'),
     tabMedia: _t('products.tabMedia', 'تصاویر'),
   };
-}
-
-function _axesOfProduct(p) {
-  return p?.variant_axes || [];
 }
 
 async function _loadMeta() {
@@ -88,7 +72,6 @@ function _renderFullPage() {
       <div class="sticky top-0 z-20 bg-surface/80 backdrop-blur rounded-2xl border border-border p-2 flex flex-wrap gap-2">
         <a href="#card-general" class="px-3 py-1.5 rounded-lg text-sm bg-accent text-white">عمومی</a>
         <a href="#card-media" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">تصاویر</a>
-        <a href="#card-axes" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">محورها</a>
         <a href="#card-variants" class="px-3 py-1.5 rounded-lg text-sm border border-border text-muted hover:text-body">واریانت‌ها</a>
       </div>
 
@@ -103,16 +86,10 @@ function _renderFullPage() {
         <div class="${locked ? 'pointer-events-none' : ''}" id="fullMediaWrap">${MediaTab.render({ images: _currentProduct?.images || [], t })}</div>
       </div>
 
-      <div id="card-axes" class="bg-body border border-border rounded-2xl p-6 ${locked ? 'opacity-60' : ''}">
-        <h3 class="font-bold text-body mb-4">محورها (حداکثر ۳)</h3>
-        ${locked ? '<p class="text-xs text-muted mb-3">ابتدا اطلاعات پایه را ذخیره کنید.</p>' : ''}
-        <div class="${locked ? 'pointer-events-none' : ''}" id="fullAxesWrap">${VariantsTab.renderAxesPreview({ axes: _axesOfProduct(_currentProduct), variants: _currentProduct?.variants || [], t })}</div>
-      </div>
-
       <div id="card-variants" class="bg-body border border-border rounded-2xl p-6 ${locked ? 'opacity-60' : ''}">
         <h3 class="font-bold text-body mb-4">واریانت‌ها</h3>
         ${locked ? '<p class="text-xs text-muted mb-3">ابتدا اطلاعات پایه را ذخیره کنید.</p>' : ''}
-        <div class="${locked ? 'pointer-events-none' : ''}" id="fullVariantsTableWrap">${VariantsTab.renderVariantSection({ variants: _currentProduct?.variants || [], t })}</div>
+        <div class="${locked ? 'pointer-events-none' : ''}">${VariantGrid.render()}</div>
       </div>
 
       <!-- sticky save bar -->
@@ -126,16 +103,22 @@ function _renderFullPage() {
     </div>
   `;
 
+  const markDirty = () => {
+    _dirty = true;
+    const hint = document.getElementById('fullPageDirtyHint');
+    if (hint) hint.textContent = 'تغییرات ذخیره‌نشده دارید';
+  };
+
   // fill general
   if (_currentProduct) GeneralTab.fill(_currentProduct);
   window.attachPriceFormatter?.('productPrice');
   const gWrap = document.getElementById('fullGeneralWrap');
   if (gWrap) {
-    GeneralTab.bind(gWrap, { onTypeChange: (v) => { _dirty = true; } });
-    gWrap.addEventListener('input', () => { _dirty = true; document.getElementById('fullPageDirtyHint').textContent = 'تغییرات ذخیره‌نشده دارید'; });
+    GeneralTab.bind(gWrap, { onTypeChange: () => markDirty() });
+    gWrap.addEventListener('input', markDirty);
   }
+
   const mWrap = document.getElementById('fullMediaWrap');
-  if (mWrap && !_isFullPage) { /* already */ }
   if (mWrap && !locked) {
     MediaTab.bind(mWrap, {
       onPreviewFiles: (input) => window.uploadProductImage?.(input),
@@ -155,15 +138,17 @@ function _renderFullPage() {
       },
     });
   }
-  if (shell && !locked) {
-    shell.dataset.axes = JSON.stringify(_currentProduct?.variant_axes || []);
-    shell.dataset.variants = JSON.stringify(_currentProduct?.variants || []);
-    VariantsTab.bind(shell, { productId: _editingProdId, t, onChanged: async () => {
-      const raw = await window.API.products.get(_editingProdId);
-      _currentProduct = raw?.data || raw;
-    }});
-    VariantsTab.bindPriceInputs(shell);
+
+  // variant grid
+  if (!locked) {
+    VariantGrid.mount(document.getElementById('variantGridRoot'), {
+      product: _currentProduct,
+      productId: _editingProdId,
+      onDirty: markDirty,
+      onSaved: (p) => { _currentProduct = p; },
+    });
   }
+
   if (window.lucide) lucide.createIcons();
   _bindFullPageActions();
   _installBeforeUnload();
@@ -212,21 +197,21 @@ function _bindFullPageActions() {
         window.setLoading?.(false);
         return;
       }
-      const shell = _fullPageShell();
-      if (shell) {
-        const rows = VariantsTab.collectVariants(shell);
-        if (rows.length) await window.API.products.bulkUpdateVariants(productId, rows);
-      }
+
+      // ذخیره‌ی گرید واریانت‌ها (فقط اگر تغییر کرده)
+      if (VariantGrid.isDirty()) await VariantGrid.save({ silent: true });
+
       await _uploadPendingImages(productId);
       window.setLoading?.(false);
       window.toast?.('محصول ذخیره شد');
       _dirty = false;
-      document.getElementById('fullPageDirtyHint').textContent = 'ذخیره شد';
+      const hint = document.getElementById('fullPageDirtyHint');
+      if (hint) hint.textContent = 'ذخیره شد';
       await openProductPage(productId);
       window.loadProducts?.();
     } catch (err) {
       window.setLoading?.(false);
-      window.toast?.(err.message, 'error');
+      window.toast?.(err.displayMessage?.() || err.message, 'error');
     }
   });
 }

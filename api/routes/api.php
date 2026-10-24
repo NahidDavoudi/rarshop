@@ -156,7 +156,7 @@ $router->group([
 
         // Variants
         $router->put('/variants/{id}',                     [VariantController::class, 'update']);
-
+        $router->post('/products/{id}/variants/grid', [VariantController::class, 'syncGrid']);
         // Attribute types
         $router->get('/attribute-types',                  [AttributeController::class, 'index']);
         $router->post('/attribute-types',                 [AttributeController::class, 'store']);

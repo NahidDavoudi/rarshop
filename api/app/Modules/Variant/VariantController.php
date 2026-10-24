@@ -145,4 +145,14 @@ class VariantController extends Controller
             $this->success($val, 'مقادیر ادغام شدند');
         } catch (\RuntimeException $e) { $this->error($e->getMessage(), $e->getCode() ?: 400); }
     }
+    // POST /api/v1/admin/products/{id}/variants/grid
+    public function syncGrid(Request $request, int $id): void
+    {
+        try {
+            $res = $this->service->syncGrid($id, (array)$request->input('axes', []), (array)$request->input('rows', []));
+            $this->success($res, 'واریانت‌ها ذخیره شد');
+        } catch (\RuntimeException $e) {
+            $this->error($e->getMessage(), $e->getCode() ?: 400);
+        }
+    }
 }
