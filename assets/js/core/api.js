@@ -391,6 +391,7 @@ const products = {
   previewGenerate: (id, axes) => post(`/admin/products/${id}/variants/preview`, { axes }),
   bulkUpdateVariants: (id, variants) => put(`/admin/products/${id}/variants/bulk`, { variants }),
   bulkInventory: (id, payload) => post(`/admin/products/${id}/variants/bulk-inventory`, payload),
+  syncVariantGrid: (id, payload) => post(`/admin/products/${id}/variants/grid`, payload),
   updateVariant: (id, data) => put(`/admin/variants/${id}`, data),
   listAxes: (id) => get(`/admin/products/${id}/axes`),
   createAxis: (id, data) => post(`/admin/products/${id}/axes`, data),
