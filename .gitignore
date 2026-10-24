@@ -5,3 +5,4 @@ api/database/
 uploads/
 *_merged
 .*
+merged/
