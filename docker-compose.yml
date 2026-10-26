@@ -1,0 +1,35 @@
+services:
+  public:
+    build:
+      context: .
+      dockerfile: docker/public.Dockerfile
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Tehran
+    volumes:
+      - ./public/uploads:/usr/share/nginx/html/uploads:ro
+    expose:
+      - "80"
+    mem_limit: 128m
+    networks: [proxy]
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Tehran
+    volumes:
+      - ./api/.env:/var/www/html/.env:ro
+      - ./public/uploads:/var/www/html/uploads
+    expose:
+      - "80"
+    mem_limit: 512m
+    networks: [proxy, db_net]
+
+networks:
+  proxy:
+    external: true
+  db_net:
+    external: true
