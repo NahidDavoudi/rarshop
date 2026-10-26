@@ -1684,7 +1684,7 @@ export default {
 
   api: {
 
-    baseUrl: 'api/v1',
+    baseUrl: 'https://api.rar.nadstore.ir',
 
   },
 

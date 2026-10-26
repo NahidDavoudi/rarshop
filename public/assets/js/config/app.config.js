@@ -8,7 +8,7 @@ export default {
   },
 
   api: {
-    baseUrl: 'api/v1',
+    baseUrl: 'https://api.rar.nadstore.ir',
     timeout: 30000,
     retries: 1,
     retryDelay: 600,
