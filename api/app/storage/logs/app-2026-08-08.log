@@ -1,3 +1,0 @@
-[2026-08-08 12:55:09] app.INFO: BitPay callback received {"trans_id":"37492757","id_get":"37486595"}
-[2026-08-08 12:55:09] app.INFO: Verifying payment {"trans_id":"37492757","id_get":"37486595"}
-[2026-08-08 12:55:09] app.INFO: BitPay verify response {"response":"{\"status\":1,\"amount\":12500000,\"cardNum\":\"603799******4681\",\"factorId\":\"51\"}","curl_error":""}

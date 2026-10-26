@@ -1,8 +1,7 @@
 api/.env
 api/.htaccess
 api/v1/.htaccess
-api/database/
-uploads/
-*_merged
-.*
+api/vendor/
+*.log
+public/uploads/
 merged/
