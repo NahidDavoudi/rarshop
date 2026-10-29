@@ -1,6 +1,4 @@
 api/.env
-api/.htaccess
-api/v1/.htaccess
 api/vendor/
 *.log
 public/uploads/
