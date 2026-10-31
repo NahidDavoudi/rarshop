@@ -11,8 +11,8 @@ use App\Core\Http\RequestContext;
 // ─── CORS ────────────────────────────────────
 // باید قبل از هر خروجی و هر چیز دیگه‌ای باشه، تا روی خطاها هم اعمال بشه
 $allowedOrigins = [
-    'https://rar.nadstore.ir',
-    'https://www.rar.nadstore.ir',
+    'https://rarshop.ir',
+    'https://api.rarshop.ir',
     'https://rar.test'
 ];
 
